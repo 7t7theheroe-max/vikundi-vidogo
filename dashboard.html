@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashibodi — Vikundi Vidogo</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    /* ── Dashboard-specific styles ── */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
+      border-radius: var(--radius-lg);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .welcome-banner::after {
+      content: '';
+      position: absolute;
+      right: -60px; top: -60px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.06);
+    }
+    .welcome-banner h2 { font-size: 1.4rem; margin-bottom: 4px; }
+    .welcome-banner p  { color: rgba(255,255,255,.7); font-size: .88rem; }
+    .welcome-banner .btn-gold { flex-shrink: 0; }
+
+    /* Approval card */
+    .approval-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+    .approval-info { flex: 1; }
+    .approval-info .name { font-weight: 600; font-size: .92rem; }
+    .approval-info .meta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+    .approval-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* Report row summary */
+    .report-group-name { font-weight: 600; }
+    .report-date        { font-size: .8rem; color: var(--text-muted); }
+
+    /* Zone overview cards */
+    .zone-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .zone-group-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .zone-group-card .group-title { font-weight: 700; font-size: .92rem; margin-bottom: 10px; }
+    .zone-group-card .mini-stats  { display: flex; gap: 12px; }
+    .mini-stat { text-align: center; flex: 1; }
+    .mini-stat .mv { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+    .mini-stat .ml { font-size: .68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
+
+    /* Admin tabs */
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- Toast & loading -->
+<div class="toast-container" id="toast-container"></div>
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <span>Inapakia...</span>
+</div>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- Rejection/approve modal -->
+<div class="modal-overlay" id="action-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Hatua ya Akaunti</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-body-content"></div>
+      <div class="form-group" id="reason-group" style="display:none;margin-top:14px">
+        <label class="form-label">Sababu ya Kukataa</label>
+        <textarea id="modal-reason" class="form-textarea" placeholder="Eleza sababu..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Ghairi</button>
+      <button class="btn" id="modal-confirm-btn" onclick="confirmModalAction()">Thibitisha</button>
+    </div>
+  </div>
+</div>
+
+<!-- View report modal -->
+<div class="modal-overlay" id="report-modal" style="overflow-y:auto">
+  <div class="modal" style="max-width:680px;max-height:90vh;overflow-y:auto">
+    <div class="modal-header">
+      <h3 id="report-modal-title">Taarifa ya Kikundi</h3>
+      <button class="modal-close" onclick="closeReportModal()">✕</button>
+    </div>
+    <div class="modal-body" id="report-modal-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">✝</div>
+    <div class="sidebar-logo-text">
+      <div class="app-name">Vikundi Vidogo</div>
+      <div class="app-sub">Kipunguni SDA</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <!-- Injected by JS based on role -->
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-user" onclick="logout()">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-info">
+        <div class="user-name" id="user-name-sidebar">...</div>
+        <div class="user-role" id="user-role-sidebar">...</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════ NAVBAR ══════════════════════ -->
+<header class="navbar">
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()">☰</button>
+  <div class="navbar-title" id="navbar-title">
+    Dashibodi <span id="navbar-sub"></span>
+  </div>
+  <div class="navbar-actions">
+    <span id="navbar-user-badge"></span>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Ondoka 🚪</button>
+  </div>
+</header>
+
+<!-- ══════════════════════ MAIN CONTENT ══════════════════════ -->
+<main class="main-content" id="main-content">
+
+  <!-- ─── GROUP LEADER PANEL ─── -->
+  <div id="panel-leader" style="display:none">
+    <div class="welcome-banner" id="leader-banner">
+      <div>
+        <h2 id="leader-welcome">Karibu! 🙏</h2>
+        <p id="leader-sub">Leo ni siku nzuri ya kuwasilisha taarifa yako.</p>
+      </div>
+      <a href="form.html" class="btn btn-gold">
+        ✏️ Wasilisha Taarifa
+      </a>
+    </div>
+
+    <div class="stats-grid" id="leader-stats">
+      <div class="stat-card">
+        <div class="stat-icon blue">📋</div>
+        <div class="stat-info">
+          <div class="stat-value" id="ls-total">0</div>
+          <div class="stat-label">Taarifa Zote</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="ls-this-week">—</div>
+          <div class="stat-label">Wiki Hii</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon gold">👥</div>
+        <div class="stat-info">
+          <div class="stat-value" id="ls-avg-att">—</div>
+          <div class="stat-label">Wastani wa Mahudhurio</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h3>📁 Taarifa Zangu za Hivi Karibuni</h3>
+      </div>
+      <div class="card-body" style="padding-top:12px">
+        <div class="table-wrap">
+          <table class="table" id="leader-reports-table">
+            <thead>
+              <tr>
+                <th>Tarehe</th>
+                <th>Kikundi</th>
+                <th>Waliohudhuria</th>
+                <th>Hali</th>
+                <th>Tazama</th>
+              </tr>
+            </thead>
+            <tbody id="leader-reports-body">
+              <tr><td colspan="5" style="text-align:center;padding:32px;color:var(--text-muted)">Inapakia...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ZONE LEADER PANEL ─── -->
+  <div id="panel-zone" style="display:none">
+    <div class="page-header">
+      <div>
+        <h2 id="zone-welcome">Dashibodi ya Kanda</h2>
+        <p id="zone-sub">Simamia vikundi na taarifa za kanda yako</p>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">🏘️</div>
+        <div class="stat-info">
+          <div class="stat-value" id="zs-groups">0</div>
+          <div class="stat-label">Vikundi Vyote</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon gold">⏳</div>
+        <div class="stat-info">
+          <div class="stat-value" id="zs-pending">0</div>
+          <div class="stat-label">Wanasubiri Idhini</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">📋</div>
+        <div class="stat-info">
+          <div class="stat-value" id="zs-reports">0</div>
+          <div class="stat-label">Taarifa Wiki Hii</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">👥</div>
+        <div class="stat-info">
+          <div class="stat-value" id="zs-att">0</div>
+          <div class="stat-label">Jumla ya Mahudhurio</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Approval queue -->
+    <div class="card mb-16" style="margin-bottom:24px">
+      <div class="card-header">
+        <h3>🔔 Wanasubiri Idhini</h3>
+        <span class="badge badge-pending" id="pending-count-badge">0</span>
+      </div>
+      <div class="card-body" style="padding-top:12px">
+        <div id="approval-list">
+          <div class="empty-state">
+            <div class="empty-icon">✅</div>
+            <h4>Hakuna wanaosongoja</h4>
+            <p>Maombi yote ya akaunti yameshughulikiwa.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports from zone -->
+    <div class="card">
+      <div class="card-header">
+        <h3>📊 Taarifa za Kanda Yangu</h3>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="zone-report-filter" class="form-select" style="width:auto;padding:6px 10px;font-size:.82rem" onchange="loadZoneReports()">
+            <option value="7">Wiki 1 iliyopita</option>
+            <option value="30" selected>Mwezi 1 uliopita</option>
+            <option value="90">Miezi 3 iliyopita</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-body" style="padding-top:12px">
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tarehe</th>
+                <th>Kikundi</th>
+                <th>Kiongozi</th>
+                <th>Waliohudhuria</th>
+                <th>Michango</th>
+                <th>Tazama</th>
+              </tr>
+            </thead>
+            <tbody id="zone-reports-body">
+              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Inapakia...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ADMIN PANEL ─── -->
+  <div id="panel-admin" style="display:none">
+    <div class="page-header">
+      <div>
+        <h2>Dashibodi ya Msimamizi</h2>
+        <p>Usimamizi kamili wa mfumo</p>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blue">🗺️</div>
+        <div class="stat-info">
+          <div class="stat-value" id="as-zones">0</div>
+          <div class="stat-label">Kanda Zote</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">👥</div>
+        <div class="stat-info">
+          <div class="stat-value" id="as-leaders">0</div>
+          <div class="stat-label">Viongozi Wote</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon gold">📋</div>
+        <div class="stat-info">
+          <div class="stat-value" id="as-reports">0</div>
+          <div class="stat-label">Taarifa Zote</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon red">⏳</div>
+        <div class="stat-info">
+          <div class="stat-value" id="as-pending">0</div>
+          <div class="stat-label">Wanasubiri Idhini</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchAdminTab('users')">👤 Watumiaji</button>
+      <button class="tab-btn" onclick="switchAdminTab('zones')">🗺️ Kanda</button>
+      <button class="tab-btn" onclick="switchAdminTab('reports')">📋 Taarifa Zote</button>
+    </div>
+
+    <!-- Users tab -->
+    <div class="tab-panel active" id="admin-tab-users">
+      <div class="card">
+        <div class="card-header" style="padding-bottom:16px">
+          <h3>Watumiaji Wote</h3>
+          <div style="display:flex;gap:8px">
+            <select id="user-filter-role" class="form-select" style="width:auto;padding:6px 10px;font-size:.82rem" onchange="loadAllUsers()">
+              <option value="">Majukumu Yote</option>
+              <option value="group_leader">Viongozi wa Kikundi</option>
+              <option value="zone_leader">Viongozi wa Kanda</option>
+              <option value="admin">Wasimamizi</option>
+            </select>
+            <select id="user-filter-status" class="form-select" style="width:auto;padding:6px 10px;font-size:.82rem" onchange="loadAllUsers()">
+              <option value="">Hali Zote</option>
+              <option value="pending">Wanasubiri</option>
+              <option value="approved">Walioidhinishwa</option>
+              <option value="rejected">Waliokataliwa</option>
+            </select>
+          </div>
+        </div>
+        <div class="card-body" style="padding-top:0">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Jina</th>
+                  <th>Barua Pepe</th>
+                  <th>Jukumu</th>
+                  <th>Hali</th>
+                  <th>Tarehe ya Usajili</th>
+                  <th>Hatua</th>
+                </tr>
+              </thead>
+              <tbody id="admin-users-body">
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text-muted)">Inapakia...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zones tab -->
+    <div class="tab-panel" id="admin-tab-zones">
+      <div class="card">
+        <div class="card-header" style="padding-bottom:16px">
+          <h3>Kanda Zote</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddZoneModal()">+ Ongeza Kanda</button>
+        </div>
+        <div class="card-body" style="padding-top:0">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>Jina la Kanda</th><th>Kiongozi wa Kanda</th><th>Vikundi</th><th>Hatua</th></tr>
+              </thead>
+              <tbody id="admin-zones-body">
+                <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted)">Inapakia...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports tab -->
+    <div class="tab-panel" id="admin-tab-reports">
+      <div class="card">
+        <div class="card-header" style="padding-bottom:16px">
+          <h3>Taarifa Zote</h3>
+          <select id="admin-report-filter" class="form-select" style="width:auto;padding:6px 10px;font-size:.82rem" onchange="loadAllReports()">
+            <option value="30">Mwezi 1 uliopita</option>
+            <option value="90">Miezi 3 iliyopita</option>
+            <option value="365">Mwaka huu</option>
+          </select>
+        </div>
+        <div class="card-body" style="padding-top:0">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Tarehe</th>
+                  <th>Kikundi</th>
+                  <th>Kiongozi</th>
+                  <th>Kanda</th>
+                  <th>Waliohudhuria</th>
+                  <th>Hali</th>
+                  <th>Tazama</th>
+                </tr>
+              </thead>
+              <tbody id="admin-reports-body">
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Inapakia...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main><!-- /.main-content -->
+
+<!-- Add zone modal -->
+<div class="modal-overlay" id="add-zone-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Ongeza Kanda Mpya</h3>
+      <button class="modal-close" onclick="closeAddZoneModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Jina la Kanda <span class="req">*</span></label>
+        <input type="text" id="new-zone-name" class="form-input" placeholder="Mfano: Kanda ya Kaskazini"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Chagua Kiongozi wa Kanda</label>
+        <select id="new-zone-leader" class="form-select">
+          <option value="">— Chagua (hiari) —</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAddZoneModal()">Ghairi</button>
+      <button class="btn btn-primary" onclick="saveNewZone()">Hifadhi Kanda</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+
+<script>
+let currentUser = null;
+let currentProfile = null;
+let modalAction = null;
+let modalTargetUid = null;
+
+// ── Bootstrap ──
+requireAuth(async (user, profile) => {
+  currentUser   = user;
+  currentProfile = profile;
+
+  // Check if approved
+  if ((profile.role === 'group_leader' || profile.role === 'zone_leader') && profile.status !== 'approved') {
+    window.location.href = 'login.html'; return;
+  }
+
+  renderSidebar(profile);
+  renderNavbar(profile);
+  showPanel(profile.role);
+  await loadPanelData(profile);
+});
+
+// ── Sidebar nav per role ──
+function renderSidebar(profile) {
+  document.getElementById('user-avatar').textContent    = getInitials(profile.name);
+  document.getElementById('user-name-sidebar').textContent = profile.name;
+  document.getElementById('user-role-sidebar').textContent = ROLE_LABELS[profile.role] || profile.role;
+
+  const nav = document.getElementById('sidebar-nav');
+  const items = {
+    group_leader: [
+      { icon:'🏠', label:'Dashibodi',          action:"setPage('home')" },
+      { icon:'✏️', label:'Wasilisha Taarifa',  action:"window.location.href='form.html'" },
+      { icon:'📁', label:'Taarifa Zangu',       action:"setPage('my-reports')" },
+    ],
+    zone_leader: [
+      { icon:'🏠', label:'Dashibodi',           action:"setPage('home')" },
+      { icon:'🔔', label:'Idhini za Akaunti',   action:"setPage('approvals')" },
+      { icon:'📊', label:'Taarifa za Kanda',    action:"setPage('zone-reports')" },
+      { icon:'🏘️', label:'Vikundi Vyangu',     action:"setPage('my-groups')" },
+    ],
+    admin: [
+      { icon:'🏠', label:'Dashibodi',           action:"setPage('home')" },
+      { icon:'👤', label:'Watumiaji',           action:"switchAdminTab('users')" },
+      { icon:'🗺️', label:'Kanda',              action:"switchAdminTab('zones')" },
+      { icon:'📋', label:'Taarifa Zote',        action:"switchAdminTab('reports')" },
+    ],
+  };
+
+  const list = items[profile.role] || [];
+  nav.innerHTML = `<div class="nav-section-label">Menyu</div>` +
+    list.map((item, i) =>
+      `<button class="nav-item ${i===0?'active':''}" onclick="${item.action};setActiveNav(this)">
+         <span class="nav-icon">${item.icon}</span> ${item.label}
+       </button>`
+    ).join('');
+}
+
+function setActiveNav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function renderNavbar(profile) {
+  const badgeClass = { group_leader:'badge-role-leader', zone_leader:'badge-role-zone', admin:'badge-role-admin' };
+  document.getElementById('navbar-user-badge').innerHTML =
+    `<span class="badge ${badgeClass[profile.role]||''}">${ROLE_LABELS[profile.role]||''}</span>`;
+}
+
+// ── Show the correct panel ──
+function showPanel(role) {
+  document.getElementById('panel-leader').style.display = role === 'group_leader' ? 'block' : 'none';
+  document.getElementById('panel-zone').style.display   = role === 'zone_leader'  ? 'block' : 'none';
+  document.getElementById('panel-admin').style.display  = role === 'admin'        ? 'block' : 'none';
+}
+
+// ── Load panel data by role ──
+async function loadPanelData(profile) {
+  setLoading(true);
+  try {
+    if (profile.role === 'group_leader') await loadLeaderDashboard(profile);
+    if (profile.role === 'zone_leader')  await loadZoneDashboard(profile);
+    if (profile.role === 'admin')        await loadAdminDashboard(profile);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ══════════ GROUP LEADER ══════════
+async function loadLeaderDashboard(profile) {
+  document.getElementById('leader-welcome').textContent = `Karibu, ${profile.name.split(' ')[0]}! 🙏`;
+  document.getElementById('leader-sub').textContent =
+    `Kikundi: ${profile.groupName || '—'} • Leo ni ${new Date().toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long'})}`;
+
+  const snap = await db.collection('reports')
+    .where('leaderId','==',currentUser.uid)
+    .orderBy('submittedAt','desc')
+    .limit(20)
+    .get();
+
+  const reports = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  document.getElementById('ls-total').textContent = reports.length;
+
+  // Check if submitted this week
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+  const thisWeek = reports.filter(r => r.submittedAt?.toDate() > weekAgo);
+  document.getElementById('ls-this-week').textContent = thisWeek.length > 0 ? '✅' : '❌';
+
+  // Avg attendance
+  const attended = reports.filter(r => r.mahudhurio?.waliohudhuria);
+  const avg = attended.length
+    ? Math.round(attended.reduce((s,r) => s + Number(r.mahudhurio.waliohudhuria||0), 0) / attended.length)
+    : 0;
+  document.getElementById('ls-avg-att').textContent = avg || '—';
+
+  const tbody = document.getElementById('leader-reports-body');
+  if (reports.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state" style="padding:28px">
+      <div class="empty-icon">📋</div>
+      <h4>Hakuna taarifa bado</h4>
+      <p>Wasilisha taarifa yako ya kwanza!</p>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = reports.map(r => `
+    <tr>
+      <td><div class="report-date">${formatDate(r.submittedAt)}</div></td>
+      <td><div class="report-group-name">${r.groupName||'—'}</div></td>
+      <td>${r.mahudhurio?.waliohudhuria||'—'}</td>
+      <td><span class="badge badge-${r.status||'submitted'}">${r.status==='reviewed'?'Imekaguliwa':'Imewasilishwa'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewReport('${r.id}')">👁 Tazama</button></td>
+    </tr>
+  `).join('');
+}
+
+// ══════════ ZONE LEADER ══════════
+async function loadZoneDashboard(profile) {
+  document.getElementById('zone-welcome').textContent = `Dashibodi — ${profile.name.split(' ')[0]}`;
+  const zoneId = profile.zoneId;
+  if (!zoneId) { document.getElementById('zone-sub').textContent = 'Kanda haijapewa bado.'; return; }
+
+  // Load zone info
+  const zoneDoc = await db.collection('zones').doc(zoneId).get();
+  if (zoneDoc.exists) {
+    document.getElementById('zone-sub').textContent = `Kanda: ${zoneDoc.data().name}`;
+  }
+
+  // Groups in zone
+  const groupsSnap = await db.collection('users')
+    .where('zoneId','==',zoneId).where('role','==','group_leader').get();
+  const allGroups = groupsSnap.docs.map(d=>({uid:d.id,...d.data()}));
+  document.getElementById('zs-groups').textContent = allGroups.filter(g=>g.status==='approved').length;
+
+  // Pending approvals
+  const pending = allGroups.filter(g=>g.status==='pending');
+  document.getElementById('zs-pending').textContent = pending.length;
+  document.getElementById('pending-count-badge').textContent = pending.length;
+
+  renderApprovalList(pending);
+  await loadZoneReports(zoneId);
+}
+
+function renderApprovalList(pending) {
+  const container = document.getElementById('approval-list');
+  if (pending.length === 0) {
+    container.innerHTML = `<div class="empty-state" style="padding:24px">
+      <div class="empty-icon">✅</div><h4>Hakuna wanaosongoja</h4>
+      <p>Maombi yote yameshughulikiwa.</p></div>`;
+    return;
+  }
+  container.innerHTML = pending.map(u => `
+    <div class="approval-card" style="margin-bottom:10px">
+      <div class="user-avatar" style="flex-shrink:0">${getInitials(u.name)}</div>
+      <div class="approval-info">
+        <div class="name">${u.name}</div>
+        <div class="meta">📧 ${u.email} • 🏘️ ${u.groupName||'—'} • ${formatDate(u.createdAt)}</div>
+      </div>
+      <div class="approval-actions">
+        <button class="btn btn-success btn-sm" onclick="openApprove('${u.uid}','${u.name}')">✓ Idhinisha</button>
+        <button class="btn btn-danger btn-sm"  onclick="openReject('${u.uid}','${u.name}')">✕ Kataa</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadZoneReports(zoneId) {
+  const id = zoneId || currentProfile.zoneId;
+  if (!id) return;
+  const days = parseInt(document.getElementById('zone-report-filter')?.value||30);
+  const since = new Date(); since.setDate(since.getDate()-days);
+
+  const snap = await db.collection('reports')
+    .where('zoneId','==',id)
+    .orderBy('submittedAt','desc')
+    .limit(50)
+    .get();
+
+  const reports = snap.docs.map(d=>({id:d.id,...d.data()}))
+    .filter(r => r.submittedAt?.toDate() > since);
+
+  const totalAtt = reports.reduce((s,r)=>s+Number(r.mahudhurio?.waliohudhuria||0),0);
+  document.getElementById('zs-reports').textContent = reports.length;
+  document.getElementById('zs-att').textContent     = totalAtt;
+
+  const tbody = document.getElementById('zone-reports-body');
+  if (reports.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state" style="padding:24px">
+      <div class="empty-icon">📋</div><h4>Hakuna taarifa</h4></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = reports.map(r=>`
+    <tr>
+      <td>${formatDate(r.submittedAt)}</td>
+      <td><strong>${r.groupName||'—'}</strong></td>
+      <td>${r.leaderName||'—'}</td>
+      <td>${r.mahudhurio?.waliohudhuria||'—'}</td>
+      <td>TZS ${Number(r.michango?.sadaka||0)+Number(r.michango?.zaka||0)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewReport('${r.id}')">👁</button></td>
+    </tr>
+  `).join('');
+}
+
+// ══════════ ADMIN ══════════
+async function loadAdminDashboard(profile) {
+  const [zonesSnap, usersSnap, reportsSnap] = await Promise.all([
+    db.collection('zones').get(),
+    db.collection('users').get(),
+    db.collection('reports').limit(200).get(),
+  ]);
+
+  const users   = usersSnap.docs.map(d=>({uid:d.id,...d.data()}));
+  const pending = users.filter(u=>u.status==='pending');
+  document.getElementById('as-zones').textContent   = zonesSnap.size;
+  document.getElementById('as-leaders').textContent = users.filter(u=>u.role==='group_leader'&&u.status==='approved').length;
+  document.getElementById('as-reports').textContent = reportsSnap.size;
+  document.getElementById('as-pending').textContent = pending.length;
+
+  await Promise.all([loadAllUsers(), loadAllZones(), loadAllReports()]);
+}
+
+async function loadAllUsers() {
+  const roleF   = document.getElementById('user-filter-role')?.value   || '';
+  const statusF = document.getElementById('user-filter-status')?.value || '';
+
+  let query = db.collection('users').orderBy('createdAt','desc');
+  const snap = await query.get();
+  let users = snap.docs.map(d=>({uid:d.id,...d.data()}));
+  if (roleF)   users = users.filter(u=>u.role===roleF);
+  if (statusF) users = users.filter(u=>u.status===statusF);
+
+  const tbody = document.getElementById('admin-users-body');
+  if (users.length === 0) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Hakuna watumiaji</td></tr>`; return; }
+
+  const badgeClass = {group_leader:'badge-role-leader',zone_leader:'badge-role-zone',admin:'badge-role-admin'};
+  tbody.innerHTML = users.map(u=>`
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:10px">
+        <div class="user-avatar" style="width:32px;height:32px;font-size:.75rem">${getInitials(u.name)}</div>
+        <div><div style="font-weight:600;font-size:.88rem">${u.name}</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">${u.groupName||''}</div>
+        </div>
+      </div></td>
+      <td style="font-size:.82rem">${u.email}</td>
+      <td><span class="badge ${badgeClass[u.role]||''}">${ROLE_LABELS[u.role]||u.role}</span></td>
+      <td><span class="badge badge-${u.status||'pending'}">${
+        {pending:'Inasubiri',approved:'Imeidhinishwa',rejected:'Ilikataliwa'}[u.status]||u.status
+      }</span></td>
+      <td style="font-size:.8rem">${formatDate(u.createdAt)}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          ${u.status==='pending'?`
+            <button class="btn btn-success btn-sm" onclick="openApprove('${u.uid}','${u.name}')">✓</button>
+            <button class="btn btn-danger btn-sm"  onclick="openReject('${u.uid}','${u.name}')">✕</button>
+          `:''}
+          ${u.role!=='admin'?`<button class="btn btn-outline btn-sm" onclick="promoteToAdmin('${u.uid}','${u.name}')">⬆ Admin</button>`:''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function loadAllZones() {
+  const [zonesSnap, usersSnap] = await Promise.all([
+    db.collection('zones').get(),
+    db.collection('users').where('role','==','zone_leader').get(),
+  ]);
+  const zoneLeaders = {};
+  usersSnap.docs.forEach(d=>{ const u=d.data(); if(u.zoneId) zoneLeaders[u.zoneId]=u.name; });
+
+  const tbody = document.getElementById('admin-zones-body');
+  if (zonesSnap.empty) { tbody.innerHTML=`<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-muted)">Hakuna kanda. Ongeza kanda mpya.</td></tr>`; return; }
+
+  tbody.innerHTML = zonesSnap.docs.map(d=>{
+    const z=d.data();
+    return `<tr>
+      <td><strong>${z.name}</strong></td>
+      <td>${z.leaderName||zoneLeaders[d.id]||'—'}</td>
+      <td>—</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteZone('${d.id}','${z.name}')">🗑 Futa</button></td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAllReports() {
+  const days = parseInt(document.getElementById('admin-report-filter')?.value||30);
+  const since = new Date(); since.setDate(since.getDate()-days);
+  const snap  = await db.collection('reports').orderBy('submittedAt','desc').limit(200).get();
+  const reports = snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.submittedAt?.toDate()>since);
+
+  const tbody = document.getElementById('admin-reports-body');
+  if (!reports.length) { tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Hakuna taarifa</td></tr>`; return; }
+
+  tbody.innerHTML = reports.map(r=>`
+    <tr>
+      <td>${formatDate(r.submittedAt)}</td>
+      <td><strong>${r.groupName||'—'}</strong></td>
+      <td>${r.leaderName||'—'}</td>
+      <td>${r.zoneName||'—'}</td>
+      <td>${r.mahudhurio?.waliohudhuria||'—'}</td>
+      <td><span class="badge badge-${r.status||'submitted'}">${r.status==='reviewed'?'Imekaguliwa':'Imewasilishwa'}</span></td>
+      <td><button class="btn btn-ghost btn-sm" onclick="viewReport('${r.id}')">👁</button></td>
+    </tr>
+  `).join('');
+}
+
+// ══════════ APPROVE / REJECT ══════════
+function openApprove(uid, name) {
+  modalAction    = 'approve';
+  modalTargetUid = uid;
+  document.getElementById('modal-title').textContent = 'Idhinisha Akaunti';
+  document.getElementById('modal-body-content').innerHTML =
+    `<p>Je, una hakika kutaka <strong>kuidhinisha</strong> akaunti ya <strong>${name}</strong>?</p>`;
+  document.getElementById('reason-group').style.display   = 'none';
+  const btn = document.getElementById('modal-confirm-btn');
+  btn.className  = 'btn btn-success';
+  btn.textContent = '✓ Idhinisha';
+  openModal('action-modal');
+}
+
+function openReject(uid, name) {
+  modalAction    = 'reject';
+  modalTargetUid = uid;
+  document.getElementById('modal-title').textContent = 'Kataa Akaunti';
+  document.getElementById('modal-body-content').innerHTML =
+    `<p>Je, una hakika kutaka <strong>kukataa</strong> akaunti ya <strong>${name}</strong>?</p>`;
+  document.getElementById('reason-group').style.display   = 'block';
+  document.getElementById('modal-reason').value = '';
+  const btn = document.getElementById('modal-confirm-btn');
+  btn.className  = 'btn btn-danger';
+  btn.textContent = '✕ Kataa';
+  openModal('action-modal');
+}
+
+async function confirmModalAction() {
+  if (!modalTargetUid) return;
+  setLoading(true);
+  try {
+    const update = { approvedBy: currentUser.uid };
+    if (modalAction === 'approve') {
+      update.status = 'approved';
+    } else {
+      update.status = 'rejected';
+      update.rejectionReason = document.getElementById('modal-reason').value.trim() || '—';
+    }
+    await db.collection('users').doc(modalTargetUid).update(update);
+    showToast(modalAction==='approve' ? 'Akaunti imeidhinishwa!' : 'Akaunti imekataliwa.', modalAction==='approve'?'success':'warning');
+    closeModal();
+    await loadPanelData(currentProfile);
+  } catch(e) {
+    showToast('Tatizo: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function promoteToAdmin(uid, name) {
+  if (!confirm(`Je, unataka kumfanya ${name} msimamizi (admin)?`)) return;
+  setLoading(true);
+  try {
+    await db.collection('users').doc(uid).update({ role:'admin', status:'approved' });
+    showToast(`${name} amekuwa msimamizi!`, 'success');
+    await loadAllUsers();
+  } catch(e) { showToast('Tatizo: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+// ══════════ ZONES ══════════
+function openAddZoneModal() {
+  loadZoneLeadersForSelect();
+  openModal('add-zone-modal');
+}
+function closeAddZoneModal() { closeModalById('add-zone-modal'); }
+
+async function loadZoneLeadersForSelect() {
+  const snap = await db.collection('users').where('role','==','zone_leader').where('status','==','approved').get();
+  const sel  = document.getElementById('new-zone-leader');
+  sel.innerHTML = '<option value="">— Chagua (hiari) —</option>';
+  snap.docs.forEach(d=>{
+    const u=d.data();
+    const opt=document.createElement('option'); opt.value=d.id; opt.textContent=u.name; sel.appendChild(opt);
+  });
+}
+
+async function saveNewZone() {
+  const name     = document.getElementById('new-zone-name').value.trim();
+  const leaderId = document.getElementById('new-zone-leader').value;
+  if (!name) { showToast('Ingiza jina la kanda.','warning'); return; }
+  setLoading(true);
+  try {
+    const zoneRef = await db.collection('zones').add({
+      name, leaderId: leaderId||null, leaderName:null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    if (leaderId) {
+      const leaderSnap = await db.collection('users').doc(leaderId).get();
+      const leaderData = leaderSnap.data();
+      await db.collection('users').doc(leaderId).update({ zoneId: zoneRef.id });
+      await db.collection('zones').doc(zoneRef.id).update({ leaderName: leaderData.name });
+    }
+    showToast('Kanda mpya imeongezwa!','success');
+    closeAddZoneModal();
+    await loadAllZones();
+    document.getElementById('as-zones').textContent =
+      (parseInt(document.getElementById('as-zones').textContent)||0)+1;
+  } catch(e) { showToast('Tatizo: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+async function deleteZone(id, name) {
+  if (!confirm(`Futa kanda "${name}"? Vitendo hivi haviwezi kurudishwa.`)) return;
+  setLoading(true);
+  try {
+    await db.collection('zones').doc(id).delete();
+    showToast('Kanda imefutwa.','success');
+    await loadAllZones();
+  } catch(e) { showToast('Tatizo: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+// ══════════ VIEW REPORT MODAL ══════════
+async function viewReport(reportId) {
+  setLoading(true);
+  try {
+    const snap = await db.collection('reports').doc(reportId).get();
+    if (!snap.exists) { showToast('Taarifa haikupatikana.','error'); return; }
+    const r = snap.data();
+    document.getElementById('report-modal-title').textContent =
+      `${r.groupName||'—'} • ${formatDate(r.submittedAt)}`;
+    document.getElementById('report-modal-body').innerHTML = buildReportHtml(r);
+    openModal('report-modal');
+
+    // Mark as reviewed
+    if (r.status !== 'reviewed' && (currentProfile.role === 'zone_leader' || currentProfile.role === 'admin')) {
+      await db.collection('reports').doc(reportId).update({ status:'reviewed' });
+    }
+  } catch(e) { showToast('Tatizo: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+function buildReportHtml(r) {
+  const row = (label, val) => val
+    ? `<div style="display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.88rem">
+        <span style="color:var(--text-muted);min-width:180px;font-weight:600">${label}</span>
+        <span>${val}</span></div>` : '';
+  const section = (title, icon, content) =>
+    `<div style="margin-bottom:20px">
+      <div style="font-weight:700;font-size:.92rem;color:var(--primary);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--primary-pale)">${icon} ${title}</div>
+      ${content}
+    </div>`;
+
+  return `
+    ${section('Taarifa za Msingi','ℹ️',
+      row('Kikundi', r.groupName) +
+      row('Kiongozi', r.leaderName) +
+      row('Tarehe', r.taarifa_za_msingi?.tarehe) +
+      row('Mahali', r.taarifa_za_msingi?.mahali) +
+      row('Dhumuni', r.taarifa_za_msingi?.dhumuni)
+    )}
+    ${section('Mahudhurio','👥',
+      row('Waliohudhuria',   r.mahudhurio?.waliohudhuria) +
+      row('Hawakuhudhuria',  r.mahudhurio?.hawakuhudhuria) +
+      row('Wapya/Wageni',    r.mahudhurio?.wapya_wageni) +
+      row('Wastani wa Mwezi',r.mahudhurio?.wastani_mwezi) +
+      row('Kiwango cha Umoja',r.mahudhurio?.kiwango_umoja ? `${r.mahudhurio.kiwango_umoja}/5` : null)
+    )}
+    ${section('Somo na Maombi','📖',
+      row('Mada',            r.somo_na_maombi?.mada) +
+      row('Fungu la Biblia', r.somo_na_maombi?.fungu_biblia) +
+      row('Mahitaji ya Maombi', r.somo_na_maombi?.mahitaji_maombi) +
+      row('Maombi Yaliyojibiwa', r.somo_na_maombi?.maombi_yaliyojibiwa)
+    )}
+    ${section('Utembeleaji','🚶',
+      row('Nyumba Zilizotembeleewa', r.utembeleaji?.nyumba_zilizotembeleewa) +
+      row('Wagonjwa Waliotembelewa', r.utembeleaji?.wagonjwa_waliotembelewa) +
+      row('Maelezo', r.utembeleaji?.maelezo) +
+      row('Ufuatiliaji wa Mchungaji', r.utembeleaji?.ufuatiliaji_pastor)
+    )}
+    ${section('Michango','💰',
+      row('Zaka',    r.michango?.zaka ? 'TZS '+Number(r.michango.zaka).toLocaleString() : null) +
+      row('Sadaka',  r.michango?.sadaka ? 'TZS '+Number(r.michango.sadaka).toLocaleString() : null) +
+      row('Ujenzi',  r.michango?.ujenzi ? 'TZS '+Number(r.michango.ujenzi).toLocaleString() : null) +
+      row('Maskini', r.michango?.maskini ? 'TZS '+Number(r.michango.maskini).toLocaleString() : null)
+    )}
+    ${section('Uinjilisti','✨',
+      row('Wageni Wasiobatizwa', r.uinjilisti?.wageni_wasiobatizwa) +
+      row('Masomo ya Biblia Nje', r.uinjilisti?.masomo_biblia_nje) +
+      row('Uamuzi wa Ubatizo', r.uinjilisti?.uamuzi_ubatizo) +
+      row('Changamoto', r.uinjilisti?.changamoto) +
+      row('Mambo Yanayokwenda Vizuri', r.uinjilisti?.mafanikio)
+    )}
+  `;
+}
+
+function closeReportModal() { closeModalById('report-modal'); }
+
+// ══════════ ADMIN TABS ══════════
+function switchAdminTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  const tabEl = document.getElementById('admin-tab-'+tabName);
+  if (tabEl) tabEl.classList.add('active');
+  event?.target?.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    if (b.textContent.includes(tabName==='users'?'Watumiaji':tabName==='zones'?'Kanda':'Taarifa'))
+      b.classList.add('active');
+  });
+}
+
+// ══════════ MODAL HELPERS ══════════
+function openModal(id)      { document.getElementById(id).classList.add('open'); }
+function closeModal()       { document.getElementById('action-modal').classList.remove('open'); }
+function closeModalById(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════ SIDEBAR MOBILE ══════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').style.display =
+    document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').style.display = 'none';
+}
+
+function setLoading(show) {
+  document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+function setPage(p) { /* handled by individual nav items */ }
+</script>
+</body>
+</html>

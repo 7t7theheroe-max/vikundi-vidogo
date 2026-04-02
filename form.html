@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wasilisha Taarifa — Vikundi Vidogo</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    /* ── Form page specific ── */
+    .form-page-body {
+      background: var(--bg);
+      min-height: 100vh;
+    }
+
+    /* Top bar */
+    .form-topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+    }
+    .form-topbar .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      color: var(--primary);
+      font-size: .95rem;
+    }
+    .form-topbar .brand-icon {
+      width: 34px; height: 34px;
+      background: var(--primary);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 1rem;
+    }
+    .form-topbar .save-status {
+      font-size: .78rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .save-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+    .save-dot.saving { background: var(--warning); animation: pulse .8s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    /* Wizard container */
+    .wizard-container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    /* Step progress */
+    .step-progress {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border);
+    }
+    .step-progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .step-progress-top .step-title {
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--primary);
+    }
+    .step-progress-top .step-counter {
+      font-size: .78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .progress-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+    .progress-track-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      border-radius: var(--radius-full);
+      transition: width .4s ease;
+    }
+
+    /* Step dots */
+    .step-dots {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+    .step-dot-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+      cursor: pointer;
+    }
+    .step-dot {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .72rem;
+      font-weight: 700;
+      transition: var(--transition);
+      border: 2px solid transparent;
+    }
+    .step-dot.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px rgba(27,43,107,.15);
+    }
+    .step-dot.done {
+      background: var(--success);
+      color: #fff;
+    }
+    .step-dot-label {
+      font-size: .65rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .step-dot-item.active .step-dot-label { color: var(--primary); }
+    .step-dot-item.done  .step-dot-label  { color: var(--success); }
+
+    @media (max-width:560px) { .step-dot-label { display: none; } }
+
+    /* Section card */
+    .wizard-card {
+      background: #fff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      animation: fadeSlide .3s ease both;
+      display: none;
+    }
+    .wizard-card.active { display: block; }
+    @keyframes fadeSlide {
+      from { opacity:0; transform:translateX(16px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+
+    .wizard-card-header {
+      padding: 18px 24px;
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .section-badge {
+      width: 36px; height: 36px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.15);
+      border: 1.5px solid rgba(255,255,255,.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .wizard-card-header .section-name {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .wizard-card-header .section-desc {
+      color: rgba(255,255,255,.6);
+      font-size: .78rem;
+      margin-top: 2px;
+    }
+
+    .wizard-card-body { padding: 26px 24px; }
+
+    /* Attendance boxes row */
+    .att-row {
+      display: grid;
+      grid-template-columns: repeat(4,1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    @media(max-width:480px){ .att-row { grid-template-columns: repeat(2,1fr); } }
+    .att-tile {
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 10px 12px;
+      text-align: center;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .att-tile:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(27,43,107,.08);
+    }
+    .att-tile .emoji { font-size: 1.5rem; margin-bottom: 8px; display:block; }
+    .att-tile input[type="number"] {
+      width: 100%; border: none; border-bottom: 2.5px solid var(--border);
+      border-radius: 0; text-align: center; font-size: 1.5rem; font-weight: 800;
+      color: var(--primary); padding: 2px 0; background: transparent;
+      font-family: inherit; transition: border-color var(--transition);
+    }
+    .att-tile input:focus { outline:none; border-bottom-color: var(--primary); }
+    .att-tile .att-lbl {
+      display:block; margin-top:6px; font-size: .68rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);
+    }
+
+    /* Member list */
+    .member-list-wrap { border: 1.5px solid var(--border); border-radius: var(--radius); overflow:hidden; }
+    .member-list-header {
+      display: grid; grid-template-columns: 1fr 150px 1fr;
+      gap: 8px; padding: 10px 14px;
+      background: var(--bg); font-size:.72rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted);
+    }
+    .member-list-row {
+      display: grid; grid-template-columns: 1fr 150px 1fr;
+      gap: 8px; align-items: center;
+      padding: 6px 10px; border-top: 1px solid var(--border);
+    }
+    .member-list-row input, .member-list-row select {
+      padding: 7px 10px; font-size:.85rem;
+    }
+    .add-member-btn {
+      width:100%; padding:10px; border:2px dashed var(--border);
+      background:transparent; border-radius:var(--radius-sm);
+      color:var(--primary); font-size:.85rem; font-weight:600;
+      cursor:pointer; margin-top:10px; transition: var(--transition);
+    }
+    .add-member-btn:hover { border-color:var(--primary); background:var(--primary-pale); }
+
+    /* Contribution table */
+    .contrib-wrap {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .contrib-table { width:100%; border-collapse:collapse; }
+    .contrib-table th {
+      background:var(--bg); padding:10px 14px; text-align:left;
+      font-size:.72rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.05em; color:var(--text-muted);
+    }
+    .contrib-table td { padding:7px 10px; border-top:1px solid var(--border); }
+    .contrib-table td input { padding:7px 10px; font-size:.88rem; }
+    .contrib-total-row td {
+      background: var(--primary-pale);
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--primary);
+      padding: 12px 14px;
+    }
+
+    /* Navigation buttons */
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .wizard-nav .step-hint {
+      font-size:.75rem; color:var(--text-muted); align-self:center;
+    }
+
+    /* Success screen */
+    .success-screen {
+      background:#fff;
+      border-radius:var(--radius-lg);
+      padding:56px 32px;
+      text-align:center;
+      box-shadow:var(--shadow-lg);
+      border:1px solid var(--border);
+      display:none;
+    }
+    .success-screen.active { display:block; animation:fadeSlide .4s ease; }
+    .success-icon {
+      width:80px; height:80px;
+      background:var(--success-pale);
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:2.4rem;
+      margin:0 auto 20px;
+    }
+    .success-screen h2 { color:var(--primary); margin-bottom:10px; }
+    .success-screen p  { max-width:400px; margin:0 auto 28px; }
+
+    /* Info callout */
+    .info-callout {
+      background:var(--primary-pale);
+      border-left:3px solid var(--primary);
+      padding:10px 14px;
+      border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+      font-size:.82rem;
+      color:var(--primary);
+      margin-bottom:18px;
+    }
+
+    /* Unity rating */
+    .unity-row {
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .unity-inp { display:none; }
+    .unity-inp + label {
+      display:flex; flex-direction:column; align-items:center; gap:4px;
+      padding:11px 14px; border:2px solid var(--border); border-radius:var(--radius);
+      cursor:pointer; transition:var(--transition); min-width:64px; text-align:center;
+    }
+    .unity-inp + label .un { font-size:1.2rem; font-weight:800; color:var(--text); }
+    .unity-inp + label .ul { font-size:.72rem; font-weight:600; color:var(--text-muted); }
+    .unity-inp:checked + label {
+      border-color:var(--primary); background:var(--primary); color:#fff;
+    }
+    .unity-inp:checked + label .un,
+    .unity-inp:checked + label .ul { color:#fff; }
+  </style>
+</head>
+<body class="form-page-body">
+
+<!-- Toast & loading -->
+<div class="toast-container" id="toast-container"></div>
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <span>Inatuma taarifa...</span>
+</div>
+
+<!-- Top bar -->
+<header class="form-topbar">
+  <div class="brand">
+    <div class="brand-icon">✝</div>
+    Wasilisha Taarifa
+  </div>
+  <div class="save-status" id="save-status">
+    <div class="save-dot" id="save-dot"></div>
+    <span id="save-label">Rasimu inahifadhiwa kiotomatiki</span>
+  </div>
+  <a href="dashboard.html" class="btn btn-outline btn-sm">← Rudi</a>
+</header>
+
+<!-- Wizard container -->
+<div class="wizard-container">
+
+  <!-- Step progress -->
+  <div class="step-progress" id="step-progress">
+    <div class="step-progress-top">
+      <div class="step-title" id="current-step-title">Taarifa za Msingi</div>
+      <div class="step-counter" id="step-counter">Hatua 1 ya 6</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-track-fill" id="progress-fill" style="width:16.6%"></div>
+    </div>
+    <div class="step-dots" id="step-dots"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 0 – TAARIFA ZA MSINGI
+  ═══════════════════════════════════════ -->
+  <div class="wizard-card active" id="step-0">
+    <div class="wizard-card-header">
+      <div class="section-badge">ℹ️</div>
+      <div>
+        <div class="section-name">Taarifa za Msingi</div>
+        <div class="section-desc">Taarifa muhimu kuhusu kikundi na mkutano</div>
+      </div>
+    </div>
+    <div class="wizard-card-body">
+      <div class="form-group">
+        <label class="form-label">Jina la Kikundi <span class="req">*</span></label>
+        <div class="input-wrap">
+          <span class="input-icon">🏘️</span>
+          <input type="text" id="f-group-name" class="form-input" placeholder="Jina la kikundi chako" readonly/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Jina la Kiongozi <span class="req">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="f-leader-name" class="form-input" readonly/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tarehe ya Mkutano <span class="req">*</span></label>
+          <input type="date" id="f-date" class="form-input"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mahali pa Kukutana</label>
+          <div class="input-wrap">
+            <span class="input-icon">📍</span>
+            <input type="text" id="f-place" class="form-input" placeholder="Mfano: Nyumbani kwa Bro. James"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Muda wa Mkutano</label>
+          <input type="time" id="f-time" class="form-input"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dhumuni la Mkutano</label>
+        <div class="pill-row">
+          <input class="pill-opt" type="radio" name="purpose" id="p1" value="Kujifunza Biblia"/>
+          <label for="p1">📖 Kujifunza Biblia</label>
+          <input class="pill-opt" type="radio" name="purpose" id="p2" value="Maombi"/>
+          <label for="p2">🙏 Maombi</label>
+          <input class="pill-opt" type="radio" name="purpose" id="p3" value="Huduma za Jamii"/>
+          <label for="p3">🤝 Huduma za Jamii</label>
+          <input class="pill-opt" type="radio" name="purpose" id="p4" value="Mchanganyiko"/>
+          <label for="p4">🔀 Mchanganyiko</label>
+        </div>
+      </div>
+    </div>
+    <div class="wizard-nav">
+      <span class="step-hint">Anza na taarifa za msingi</span>
+      <button class="btn btn-primary" onclick="goNext(0)">Endelea →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 1 – MAHUDHURIO
+  ═══════════════════════════════════════ -->
+  <div class="wizard-card" id="step-1">
+    <div class="wizard-card-header">
+      <div class="section-badge">👥</div>
+      <div>
+        <div class="section-name">Mahudhurio na Ushirika</div>
+        <div class="section-desc">Idadi ya waliohudhuria na hali ya ushirika</div>
+      </div>
+    </div>
+    <div class="wizard-card-body">
+
+      <div class="att-row">
+        <div class="att-tile">
+          <span class="emoji">✅</span>
+          <input type="number" id="att-present" min="0" placeholder="0" oninput="updateMemberCount()"/>
+          <span class="att-lbl">Waliohudhuria</span>
+        </div>
+        <div class="att-tile">
+          <span class="emoji">❌</span>
+          <input type="number" id="att-absent" min="0" placeholder="0"/>
+          <span class="att-lbl">Hawakuhudhuria</span>
+        </div>
+        <div class="att-tile">
+          <span class="emoji">🆕</span>
+          <input type="number" id="att-new" min="0" placeholder="0"/>
+          <span class="att-lbl">Wapya / Wageni</span>
+        </div>
+        <div class="att-tile">
+          <span class="emoji">📈</span>
+          <input type="number" id="att-avg" min="0" placeholder="0"/>
+          <span class="att-lbl">Wastani wa Mwezi</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Kiwango cha Upendo na Umoja</label>
+        <div class="unity-row">
+          <input class="unity-inp" type="radio" name="unity" id="u1" value="1"/>
+          <label for="u1"><span class="un">1</span><span class="ul">Hafifu</span></label>
+          <input class="unity-inp" type="radio" name="unity" id="u2" value="2"/>
+          <label for="u2"><span class="un">2</span><span class="ul">Chini</span></label>
+          <input class="unity-inp" type="radio" name="unity" id="u3" value="3"/>
+          <label for="u3"><span class="un">3</span><span class="ul">Wastani</span></label>
+          <input class="unity-inp" type="radio" name="unity" id="u4" value="4"/>
+          <label for="u4"><span class="un">4</span><span class="ul">Nzuri</span></label>
+          <input class="unity-inp" type="radio" name="unity" id="u5" value="5"/>
+          <label for="u5"><span class="un">5</span><span class="ul">Bora Sana</span></label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Orodha ya Washiriki</label>
+        <div class="info-callout">Ongeza majina ya washiriki na hali yao ya mkutano huu.</div>
+        <div class="member-list-wrap">
+          <div class="member-list-header">
+            <span>Jina la Mshiriki</span>
+            <span>Hali</span>
+            <span>Sababu (kama hakuhudhuria)</span>
+          </div>
+          <div id="member-list-body"></div>
+        </div>
+        <button class="add-member-btn" onclick="addMember()">+ Ongeza Mshiriki</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Majina ya Wageni Wapya</label>
+        <textarea id="f-new-guests" class="form-textarea" placeholder="Andika majina ya wale waliokuja mara ya kwanza..."></textarea>
+      </div>
+
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-outline" onclick="goPrev(1)">← Rudi</button>
+      <button class="btn btn-primary" onclick="goNext(1)">Endelea →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 2 – SOMO NA MAOMBI
+  ═══════════════════════════════════════ -->
+  <div class="wizard-card" id="step-2">
+    <div class="wizard-card-header">
+      <div class="section-badge">📖</div>
+      <div>
+        <div class="section-name">Somo na Maombi</div>
+        <div class="section-desc">Maudhui ya mkutano na mahitaji ya maombi</div>
+      </div>
+    </div>
+    <div class="wizard-card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mada Iliyotolewa</label>
+          <input type="text" id="f-topic" class="form-input" placeholder="Kichwa cha somo"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fungu la Biblia</label>
+          <div class="input-wrap">
+            <span class="input-icon">📜</span>
+            <input type="text" id="f-scripture" class="form-input" placeholder="Mfano: Yohana 3:16"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Washiriki Wanaojifunza Biblia Nyumbani</label>
+        <div class="pill-row">
+          <input class="pill-opt" type="radio" name="home-study" id="hs1" value="Wengi (zaidi ya nusu)"/>
+          <label for="hs1">😊 Wengi (zaidi ya nusu)</label>
+          <input class="pill-opt" type="radio" name="home-study" id="hs2" value="Wachache (chini ya nusu)"/>
+          <label for="hs2">😐 Wachache</label>
+          <input class="pill-opt" type="radio" name="home-study" id="hs3" value="Hawakai wakijifunza"/>
+          <label for="hs3">😞 Hawakai wakijifunza</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mahitaji ya Maombi Yaliyoshirikishwa</label>
+        <div class="info-callout">Andika mahitaji bila kuvunja faragha ya mshiriki.</div>
+        <textarea id="f-prayer-needs" class="form-textarea" rows="4"
+          placeholder="1. &#10;2. &#10;3. "></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Maombi Yaliyojibiwa</label>
+        <textarea id="f-answered" class="form-textarea"
+          placeholder="Shuhudia jinsi Mungu alivyojibu — hii inajenga imani ya kikundi..."></textarea>
+      </div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-outline" onclick="goPrev(2)">← Rudi</button>
+      <button class="btn btn-primary" onclick="goNext(2)">Endelea →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 3 – UTEMBELEAJI
+  ═══════════════════════════════════════ -->
+  <div class="wizard-card" id="step-3">
+    <div class="wizard-card-header">
+      <div class="section-badge">🚶</div>
+      <div>
+        <div class="section-name">Utembeleaji</div>
+        <div class="section-desc">Ziara na huduma kwa wanajamii</div>
+      </div>
+    </div>
+    <div class="wizard-card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nyumba / Familia Zilizotembeleewa</label>
+          <div class="input-wrap">
+            <span class="input-icon">🏠</span>
+            <input type="number" id="f-visits" min="0" class="form-input" placeholder="0"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Wagonjwa Waliotembelewa</label>
+          <div class="input-wrap">
+            <span class="input-icon">🏥</span>
+            <input type="number" id="f-sick" min="0" class="form-input" placeholder="0"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Maelezo ya Utembeleaji Uliofanyika</label>
+        <textarea id="f-visit-details" class="form-textarea"
+          placeholder="Mfano: Tulimtembelea Ndugu X aliye mgonjwa, tulimsaidia familia ya Dada Y..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Washiriki Wanaohitaji Ufuatiliaji wa Mchungaji / Mzee</label>
+        <textarea id="f-pastor-followup" class="form-textarea"
+          placeholder="Andika majina na hali zao..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Miradi ya Huduma kwa Jamii</label>
+        <textarea id="f-community" class="form-textarea"
+          placeholder="Mfano: Kusaidia familia maskini, kusafisha mtaa, kutembelea watoto yatima..."></textarea>
+      </div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-outline" onclick="goPrev(3)">← Rudi</button>
+      <button class="btn btn-primary" onclick="goNext(3)">Endelea →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 4 – MICHANGO
+  ═══════════════════════════════════════ -->
+  <div class="wizard-card" id="step-4">
+    <div class="wizard-card-header">
+      <div class="section-badge">💰</div>
+      <div>
+        <div class="section-name">Michango ya Maendeleo ya Kanisa</div>
+        <div class="section-desc">Fedha zilizokusanywa katika mkutano huu (TZS)</div>
+      </div>
+    </div>
+    <div class="wizard-card-body">
+      <div class="info-callout">Ingiza kiasi kilichokusanywa. Tumia Shilingi za Tanzania (TZS). Acha sifuri kama hakukusanywa.</div>
+      <div class="contrib-wrap">
+        <table class="contrib-table">
+          <thead>
+            <tr>
+              <th>Aina ya Mchango</th>
+              <th style="width:160px">Kiasi (TZS)</th>
+              <th>Maelezo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>🙏 Zaka</strong></td>
+              <td><input type="number" id="c-zaka" min="0" placeholder="0" class="form-input" oninput="calcTotal()"/></td>
+              <td><input type="text" placeholder="Maelezo (hiari)" class="form-input"/></td>
+            </tr>
+            <tr>
+              <td><strong>💝 Sadaka</strong></td>
+              <td><input type="number" id="c-sadaka" min="0" placeholder="0" class="form-input" oninput="calcTotal()"/></td>
+              <td><input type="text" placeholder="Maelezo (hiari)" class="form-input"/></td>
+            </tr>
+            <tr>
+              <td><strong>🏗️ Ujenzi wa Kanisa</strong></td>
+              <td><input type="number" id="c-ujenzi" min="0" placeholder="0" class="form-input" oninput="calcTotal()"/></td>
+              <td><input type="text" placeholder="Maelezo (hiari)" class="form-input"/></td>
+            </tr>
+            <tr>
+              <td><strong>❤️ Mfuko wa Maskini</strong></td>
+              <td><input type="number" id="c-maskini" min="0" placeholder="0" class="form-input" oninput="calcTotal()"/></td>
+              <td><input type="text" placeholder="Maelezo (hiari)" class="form-input"/></td>
+            </tr>
+            <tr>
+              <td><strong>➕ Mengineyo</strong></td>
+              <td><input type="number" id="c-other" min="0" placeholder="0" class="form-input" oninput="calcTotal()"/></td>
+              <td><input type="text" id="c-other-desc" placeholder="Eleza aina ya mchango..." class="form-input"/></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="contrib-total-row">
+              <td>📊 JUMLA YA MICHANGO</td>
+              <td id="contrib-total" colspan="2">TZS 0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Maelezo ya Ziada</label>
+        <textarea id="f-contrib-notes" class="form-textarea" placeholder="Maelezo yoyote muhimu kuhusu michango..."></textarea>
+      </div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-outline" onclick="goPrev(4)">← Rudi</button>
+      <button class="btn btn-primary" onclick="goNext(4)">Endelea →</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       STEP 5 – UINJILISTI
+  ═══════════════════════════════════════ -->
+  <div class="wizard-card" id="step-5">
+    <div class="wizard-card-header">
+      <div class="section-badge">✨</div>
+      <div>
+        <div class="section-name">Uinjilisti na Tathmini</div>
+        <div class="section-desc">Juhudi za kufikia watu na tathmini ya kiongozi</div>
+      </div>
+    </div>
+    <div class="wizard-card-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Wageni Wasiobatizwa Waliokuja</label>
+          <div class="input-wrap">
+            <span class="input-icon">🙋</span>
+            <input type="number" id="f-unbaptized" min="0" class="form-input" placeholder="0"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Masomo ya Biblia Yanayotolewa Nje</label>
+          <div class="input-wrap">
+            <span class="input-icon">📚</span>
+            <input type="number" id="f-bible-studies" min="0" class="form-input" placeholder="0"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Majina ya Wanaopokea Masomo ya Biblia</label>
+        <textarea id="f-study-names" class="form-textarea" placeholder="Andika majina yao..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Uamuzi wa Ubatizo</label>
+        <div class="info-callout">Je, kuna mtu aliyefikia uamuzi au anaelekea kubatizwa?</div>
+        <textarea id="f-baptism" class="form-textarea" placeholder="Andika jina na hali yake..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Kiongozi Anayeandaliwa (Apprentice)</label>
+        <textarea id="f-apprentice" class="form-textarea"
+          placeholder="Je, kuna mshiriki anayefunzwa kuwa mratibu wa kikundi kipya?"></textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label class="form-label">Changamoto Unazokutana Nazo</label>
+        <div class="info-callout" style="background:var(--warning-pale);border-color:var(--warning);color:var(--warning)">
+          Sehemu hii ni ya faragha — itatumika kukusaidia. Kuwa mkweli kabisa.
+        </div>
+        <textarea id="f-challenges" class="form-textarea" rows="4"
+          placeholder="Eleza vizuizi, ugumu au matatizo unayokutana nayo..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Mambo Yanayokwenda Vizuri 🎉</label>
+        <textarea id="f-wins" class="form-textarea"
+          placeholder="Shiriki mafanikio ili kanisa lote lijifunze na kushangilia pamoja..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Msaada Unaohitajika kutoka kwa Mchungaji / Wazee</label>
+        <textarea id="f-pastor-help" class="form-textarea"
+          placeholder="Andika mahitaji yoyote ya msaada au rasilimali..."></textarea>
+      </div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-outline" onclick="goPrev(5)">← Rudi</button>
+      <button class="btn btn-gold btn-lg" onclick="submitReport()">
+        ✅ Wasilisha Taarifa
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       SUCCESS SCREEN
+  ═══════════════════════════════════════ -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🙌</div>
+    <h2>Taarifa Imewasilishwa!</h2>
+    <p>Asante, <strong id="s-leader"></strong>. Taarifa ya <strong id="s-group"></strong>
+      imepokewa na imehifadhiwa. Mungu akibariki huduma yenu.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="dashboard.html" class="btn btn-primary">← Rudi Dashibodini</a>
+      <button class="btn btn-outline" onclick="resetAndStartNew()">✏️ Wasilisha Taarifa Nyingine</button>
+    </div>
+  </div>
+
+</div><!-- /.wizard-container -->
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+
+<script>
+// ── State ──
+let currentStep  = 0;
+const totalSteps = 6;
+let userProfile  = null;
+let memberCount  = 0;
+let draftTimeout = null;
+
+const stepMeta = [
+  { title: 'Taarifa za Msingi',        icon: 'ℹ️' },
+  { title: 'Mahudhurio',               icon: '👥' },
+  { title: 'Somo na Maombi',           icon: '📖' },
+  { title: 'Utembeleaji',              icon: '🚶' },
+  { title: 'Michango',                 icon: '💰' },
+  { title: 'Uinjilisti & Tathmini',    icon: '✨' },
+];
+
+// ── Init on auth ──
+requireAuth(async (user, profile) => {
+  if (profile.role !== 'group_leader' || profile.status !== 'approved') {
+    window.location.href = 'dashboard.html'; return;
+  }
+  userProfile = profile;
+
+  // Pre-fill read-only fields
+  document.getElementById('f-group-name').value  = profile.groupName  || '';
+  document.getElementById('f-leader-name').value = profile.name       || '';
+  document.getElementById('f-date').valueAsDate  = new Date();
+
+  buildStepDots();
+  updateProgress(0);
+
+  // Add 5 default member rows
+  for (let i = 0; i < 5; i++) addMember();
+
+  // Load draft if exists
+  loadDraft();
+});
+
+// ── Step dots ──
+function buildStepDots() {
+  const container = document.getElementById('step-dots');
+  container.innerHTML = stepMeta.map((s,i) => `
+    <div class="step-dot-item ${i===0?'active':''}" id="dot-item-${i}" onclick="jumpTo(${i})">
+      <div class="step-dot" id="dot-${i}">${i+1}</div>
+      <div class="step-dot-label">${s.title.split(' ')[0]}</div>
+    </div>
+  `).join('');
+}
+
+// ── Navigation ──
+function goNext(from) {
+  if (!validateStep(from)) return;
+  markDone(from);
+  showStep(from + 1);
+}
+function goPrev(from) { showStep(from - 1); }
+
+function jumpTo(step) {
+  // Only allow jumping to completed steps
+  const dot = document.getElementById('dot-'+step);
+  if (step <= currentStep) showStep(step);
+}
+
+function showStep(n) {
+  document.getElementById('step-'+currentStep).classList.remove('active');
+  currentStep = n;
+  document.getElementById('step-'+currentStep).classList.add('active');
+  updateProgress(n);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function updateProgress(step) {
+  const pct = ((step + 1) / totalSteps * 100).toFixed(1);
+  document.getElementById('progress-fill').style.width     = pct + '%';
+  document.getElementById('current-step-title').textContent = stepMeta[step].title;
+  document.getElementById('step-counter').textContent       = `Hatua ${step+1} ya ${totalSteps}`;
+
+  // Update dots
+  stepMeta.forEach((_,i) => {
+    const item = document.getElementById('dot-item-'+i);
+    const dot  = document.getElementById('dot-'+i);
+    item.className = 'step-dot-item';
+    dot.className  = 'step-dot';
+    if (i < step)  { item.classList.add('done');   dot.classList.add('done');   dot.textContent = '✓'; }
+    else if (i === step) { item.classList.add('active'); dot.classList.add('active'); dot.textContent = i+1; }
+    else { dot.textContent = i+1; }
+  });
+}
+
+function markDone(step) {
+  const dot = document.getElementById('dot-'+step);
+  if (dot) { dot.classList.add('done'); dot.textContent = '✓'; }
+}
+
+// ── Validation ──
+function validateStep(step) {
+  if (step === 0) {
+    const groupName = document.getElementById('f-group-name').value.trim();
+    const date      = document.getElementById('f-date').value;
+    if (!groupName) { showToast('Jina la kikundi linahitajika.', 'error'); return false; }
+    if (!date)      { showToast('Chagua tarehe ya mkutano.', 'error'); return false; }
+  }
+  return true;
+}
+
+// ── Member list ──
+function addMember() {
+  memberCount++;
+  const body = document.getElementById('member-list-body');
+  const row  = document.createElement('div');
+  row.className = 'member-list-row';
+  row.innerHTML = `
+    <input type="text" class="form-input member-name" placeholder="Jina la mshiriki ${memberCount}"/>
+    <select class="form-select member-status" onchange="toggleReason(this)">
+      <option value="">— Hali —</option>
+      <option value="Hudhuria">✅ Hudhuria</option>
+      <option value="Hakuhudhuria">❌ Hakuhudhuria</option>
+    </select>
+    <input type="text" class="form-input member-reason" placeholder="Sababu..." disabled/>
+  `;
+  body.appendChild(row);
+}
+
+function toggleReason(sel) {
+  const reason = sel.nextElementSibling;
+  reason.disabled = sel.value !== 'Hakuhudhuria';
+  if (reason.disabled) reason.value = '';
+}
+
+function updateMemberCount() {
+  // Could auto-populate based on count in future
+}
+
+// ── Contribution total ──
+function calcTotal() {
+  const ids = ['c-zaka','c-sadaka','c-ujenzi','c-maskini','c-other'];
+  const total = ids.reduce((sum,id) => sum + (parseFloat(document.getElementById(id).value)||0), 0);
+  document.getElementById('contrib-total').textContent = 'TZS ' + total.toLocaleString('sw-TZ');
+}
+
+// ── Auto-save draft to localStorage ──
+function scheduleDraft() {
+  clearTimeout(draftTimeout);
+  document.getElementById('save-dot').className = 'save-dot saving';
+  document.getElementById('save-label').textContent = 'Inahifadhi...';
+  draftTimeout = setTimeout(() => {
+    saveDraft();
+    document.getElementById('save-dot').className = 'save-dot';
+    document.getElementById('save-label').textContent = 'Rasimu imehifadhiwa';
+  }, 1500);
+}
+
+function saveDraft() {
+  if (!userProfile) return;
+  const data = collectFormData();
+  localStorage.setItem('vv_draft_'+userProfile.uid, JSON.stringify(data));
+}
+
+function loadDraft() {
+  if (!userProfile) return;
+  const saved = localStorage.getItem('vv_draft_'+userProfile.uid);
+  if (!saved) return;
+  try {
+    const d = JSON.parse(saved);
+    if (d.f_date)     document.getElementById('f-date').value    = d.f_date;
+    if (d.f_place)    document.getElementById('f-place').value   = d.f_place;
+    if (d.f_time)     document.getElementById('f-time').value    = d.f_time;
+    if (d.f_topic)    document.getElementById('f-topic').value   = d.f_topic;
+    if (d.f_scripture)document.getElementById('f-scripture').value = d.f_scripture;
+    showToast('Rasimu iliyohifadhiwa imepakiwa.', 'success');
+  } catch(e) { /* ignore corrupt draft */ }
+}
+
+function clearDraft() {
+  if (userProfile) localStorage.removeItem('vv_draft_'+userProfile.uid);
+}
+
+function collectFormData() {
+  // Collect member list
+  const members = [];
+  document.querySelectorAll('#member-list-body .member-list-row').forEach(row => {
+    const name   = row.querySelector('.member-name')?.value.trim();
+    const status = row.querySelector('.member-status')?.value;
+    const reason = row.querySelector('.member-reason')?.value.trim();
+    if (name) members.push({ name, status, reason });
+  });
+
+  return {
+    // Basic
+    f_date: document.getElementById('f-date').value,
+    f_place: document.getElementById('f-place').value,
+    f_time: document.getElementById('f-time').value,
+    f_purpose: document.querySelector('input[name="purpose"]:checked')?.value || '',
+    // Attendance
+    att_present: document.getElementById('att-present').value,
+    att_absent:  document.getElementById('att-absent').value,
+    att_new:     document.getElementById('att-new').value,
+    att_avg:     document.getElementById('att-avg').value,
+    att_unity:   document.querySelector('input[name="unity"]:checked')?.value || '',
+    members,
+    new_guests:  document.getElementById('f-new-guests').value,
+    // Somo
+    f_topic:     document.getElementById('f-topic').value,
+    f_scripture: document.getElementById('f-scripture').value,
+    home_study:  document.querySelector('input[name="home-study"]:checked')?.value || '',
+    prayer_needs:document.getElementById('f-prayer-needs').value,
+    answered:    document.getElementById('f-answered').value,
+    // Utembeleaji
+    visits:      document.getElementById('f-visits').value,
+    sick:        document.getElementById('f-sick').value,
+    visit_details:  document.getElementById('f-visit-details').value,
+    pastor_followup:document.getElementById('f-pastor-followup').value,
+    community:   document.getElementById('f-community').value,
+    // Michango
+    c_zaka:    document.getElementById('c-zaka').value,
+    c_sadaka:  document.getElementById('c-sadaka').value,
+    c_ujenzi:  document.getElementById('c-ujenzi').value,
+    c_maskini: document.getElementById('c-maskini').value,
+    c_other:   document.getElementById('c-other').value,
+    c_other_desc: document.getElementById('c-other-desc').value,
+    contrib_notes: document.getElementById('f-contrib-notes').value,
+    // Uinjilisti
+    unbaptized:    document.getElementById('f-unbaptized').value,
+    bible_studies: document.getElementById('f-bible-studies').value,
+    study_names:   document.getElementById('f-study-names').value,
+    baptism:       document.getElementById('f-baptism').value,
+    apprentice:    document.getElementById('f-apprentice').value,
+    challenges:    document.getElementById('f-challenges').value,
+    wins:          document.getElementById('f-wins').value,
+    pastor_help:   document.getElementById('f-pastor-help').value,
+  };
+}
+
+// ── Submit to Firestore ──
+async function submitReport() {
+  if (!userProfile) return;
+  if (!validateStep(currentStep)) return;
+
+  setLoading(true);
+  try {
+    const d = collectFormData();
+
+    const reportData = {
+      leaderId:   auth.currentUser.uid,
+      leaderName: userProfile.name,
+      groupName:  userProfile.groupName,
+      zoneId:     userProfile.zoneId   || null,
+      zoneName:   null,
+      status:     'submitted',
+      submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
+
+      taarifa_za_msingi: {
+        tarehe:  d.f_date,
+        mahali:  d.f_place,
+        muda:    d.f_time,
+        dhumuni: d.f_purpose,
+      },
+      mahudhurio: {
+        waliohudhuria:  d.att_present,
+        hawakuhudhuria: d.att_absent,
+        wapya_wageni:   d.att_new,
+        wastani_mwezi:  d.att_avg,
+        kiwango_umoja:  d.att_unity,
+        washiriki:      d.members,
+        wageni_majina:  d.new_guests,
+      },
+      somo_na_maombi: {
+        mada:              d.f_topic,
+        fungu_biblia:      d.f_scripture,
+        kujifunza_nyumbani:d.home_study,
+        mahitaji_maombi:   d.prayer_needs,
+        maombi_yaliyojibiwa: d.answered,
+      },
+      utembeleaji: {
+        nyumba_zilizotembeleewa: d.visits,
+        wagonjwa_waliotembelewa: d.sick,
+        maelezo:         d.visit_details,
+        ufuatiliaji_pastor: d.pastor_followup,
+        huduma_jamii:    d.community,
+      },
+      michango: {
+        zaka:    d.c_zaka,
+        sadaka:  d.c_sadaka,
+        ujenzi:  d.c_ujenzi,
+        maskini: d.c_maskini,
+        mengineyo: d.c_other,
+        mengineyo_desc: d.c_other_desc,
+        maelezo: d.contrib_notes,
+      },
+      uinjilisti: {
+        wageni_wasiobatizwa: d.unbaptized,
+        masomo_biblia_nje:   d.bible_studies,
+        majina_masomo:       d.study_names,
+        uamuzi_ubatizo:      d.baptism,
+        apprentice:          d.apprentice,
+        changamoto:          d.challenges,
+        mafanikio:           d.wins,
+        msaada_pastor:       d.pastor_help,
+      },
+    };
+
+    // Fetch zone name
+    if (userProfile.zoneId) {
+      const zoneSnap = await db.collection('zones').doc(userProfile.zoneId).get();
+      if (zoneSnap.exists) reportData.zoneName = zoneSnap.data().name;
+    }
+
+    await db.collection('reports').add(reportData);
+    clearDraft();
+
+    // Show success
+    document.getElementById('step-'+currentStep).classList.remove('active');
+    document.getElementById('step-progress').style.display = 'none';
+    document.getElementById('success-screen').classList.add('active');
+    document.getElementById('s-leader').textContent = userProfile.name;
+    document.getElementById('s-group').textContent  = userProfile.groupName;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch(e) {
+    showToast('Tatizo la kutuma: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function resetAndStartNew() {
+  window.location.reload();
+}
+
+function setLoading(show) {
+  document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+
+// ── Auto-save on input changes ──
+document.addEventListener('input', () => scheduleDraft());
+document.addEventListener('change', () => scheduleDraft());
+</script>
+</body>
+</html>
