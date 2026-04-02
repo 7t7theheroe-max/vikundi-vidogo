@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ingia — Vikundi Vidogo</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    /* ── Extra styles specific to login page ── */
+    .auth-body { background: var(--bg); }
+
+    .auth-split {
+      min-height: 100vh;
+    }
+
+    /* Animated gradient on left panel */
+    .auth-left {
+      background: linear-gradient(145deg, #0D3B7A 0%, #1565C0 45%, #1E88E5 80%, #42A5F5 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 8s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Floating shapes decoration */
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: .08;
+      background: var(--gold-light);
+    }
+    .shape-1 { width:180px; height:180px; top: 12%; right: 8%; animation: float1 6s ease-in-out infinite; }
+    .shape-2 { width:100px; height:100px; top: 55%; left: 10%; animation: float2 8s ease-in-out infinite; }
+    .shape-3 { width: 60px; height: 60px; bottom:15%; right:20%; animation: float1 5s ease-in-out infinite 1s; }
+    @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-18px)} }
+    @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(14px)} }
+
+    .auth-card {
+      animation: fadeUp .5s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform: translateY(24px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+
+    /* Password strength bar */
+    .strength-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: var(--radius-full);
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .strength-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width .3s ease, background .3s ease;
+      width: 0;
+    }
+
+    /* Zone select shown/hidden */
+    .zone-group { display: none; }
+    .zone-group.visible { display: block; }
+  </style>
+</head>
+<body class="auth-body">
+
+<!-- Toast -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <span>Tafadhali subiri...</span>
+</div>
+
+<div class="auth-split">
+
+  <!-- ══════════ LEFT PANEL ══════════ -->
+  <div class="auth-left">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+
+    <!-- Brand -->
+    <div class="auth-brand" style="position:relative;z-index:1">
+      <div class="auth-logo-wrap">✝</div>
+      <h1 style="color:#fff;font-size:1.8rem;margin-bottom:8px">Vikundi Vidogo</h1>
+      <div class="church-name" style="color:rgba(255,255,255,.6);font-size:0.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:500">
+        Kanisa la Waadventista wa Sabato Kipunguni
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="auth-features" style="position:relative;z-index:1">
+      <div class="auth-feature">
+        <div class="auth-feature-icon">📋</div>
+        <div>
+          <div style="font-weight:600;color:#fff;font-size:.88rem">Taarifa za Kila Wiki</div>
+          <div style="color:rgba(255,255,255,.55);font-size:.78rem">Wasilisha ripoti rahisi na haraka</div>
+        </div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">📊</div>
+        <div>
+          <div style="font-weight:600;color:#fff;font-size:.88rem">Takwimu za Vikundi</div>
+          <div style="color:rgba(255,255,255,.55);font-size:.78rem">Fuatilia maendeleo ya vikundi vyote</div>
+        </div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">🔐</div>
+        <div>
+          <div style="font-weight:600;color:#fff;font-size:.88rem">Usalama wa Taarifa</div>
+          <div style="color:rgba(255,255,255,.55);font-size:.78rem">Data salama na ya siri</div>
+        </div>
+      </div>
+      <div class="auth-feature">
+        <div class="auth-feature-icon">📱</div>
+        <div>
+          <div style="font-weight:600;color:#fff;font-size:.88rem">Inafanya Kazi Kila Mahali</div>
+          <div style="color:rgba(255,255,255,.55);font-size:.78rem">Simu, kompyuta na kompyuta kibao</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quote -->
+    <div class="auth-quote" style="position:relative;z-index:1">
+      <blockquote>"Pale ambapo wawili au watatu wamekusanyika kwa jina langu, mimi niko katikati yao."</blockquote>
+      <div style="color:rgba(255,255,255,.4);font-size:.75rem;margin-top:6px;font-weight:500">— Mathayo 18:20</div>
+    </div>
+  </div>
+
+  <!-- ══════════ RIGHT PANEL ══════════ -->
+  <div class="auth-right">
+    <div class="auth-card">
+
+      <!-- ── LOGIN FORM ── -->
+      <div id="view-login">
+        <div class="auth-card-header">
+          <h2>Karibu Tena 👋</h2>
+          <p>Ingiza taarifa zako ili uendelee</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" onclick="switchView('login')">Ingia</button>
+          <button class="auth-tab" onclick="switchView('register')">Jisajili</button>
+        </div>
+
+        <form onsubmit="handleLogin(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label">Barua Pepe <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">📧</span>
+              <input type="email" id="login-email" class="form-input" placeholder="jina@barua.com" required/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nenosiri <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="login-pass" class="form-input" placeholder="Nenosiri lako" required/>
+              <span class="input-suffix pass-toggle" onclick="togglePass('login-pass',this)">👁</span>
+            </div>
+          </div>
+
+          <div id="login-error" class="alert alert-danger" style="display:none">
+            <span class="alert-icon">⚠️</span>
+            <span id="login-error-msg"></span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:8px">
+            Ingia Sasa
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:20px">
+          <span style="color:var(--text-muted);font-size:.85rem">Bado una akaunti? </span>
+          <button class="btn btn-ghost btn-sm" onclick="switchView('register')" style="color:var(--primary);font-weight:600">
+            Jisajili hapa
+          </button>
+        </div>
+      </div>
+
+      <!-- ── REGISTER FORM ── -->
+      <div id="view-register" style="display:none">
+        <div class="auth-card-header">
+          <h2>Fungua Akaunti 🙏</h2>
+          <p>Jaza taarifa zako za usajili</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab" onclick="switchView('login')">Ingia</button>
+          <button class="auth-tab active" onclick="switchView('register')">Jisajili</button>
+        </div>
+
+        <form onsubmit="handleRegister(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label">Jina Kamili <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">👤</span>
+              <input type="text" id="reg-name" class="form-input" placeholder="Jina lako kamili" required/>
+            </div>
+            <div class="form-error" id="err-reg-name"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Barua Pepe <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">📧</span>
+              <input type="email" id="reg-email" class="form-input" placeholder="jina@barua.com" required/>
+            </div>
+            <div class="form-error" id="err-reg-email"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Namba ya Simu</label>
+            <div class="input-wrap">
+              <span class="input-icon">📞</span>
+              <input type="text" id="reg-phone" class="form-input" placeholder="+255 7XX XXX XXX"/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nenosiri <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="reg-pass" class="form-input" placeholder="Herufi 6 au zaidi" required oninput="checkStrength(this.value)"/>
+              <span class="input-suffix pass-toggle" onclick="togglePass('reg-pass',this)">👁</span>
+            </div>
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+            <div class="form-hint" id="strength-label"></div>
+            <div class="form-error" id="err-reg-pass"></div>
+          </div>
+
+          <!-- Role selection -->
+          <div class="form-group">
+            <label class="form-label">Uchague Jukumu Lako <span class="req">*</span></label>
+            <div class="role-cards">
+              <input class="role-card-input" type="radio" name="reg-role" id="role-leader" value="group_leader" onchange="onRoleChange()"/>
+              <label class="role-card-label" for="role-leader">
+                <div class="role-icon">👥</div>
+                <div class="role-name">Kiongozi wa Kikundi</div>
+                <div class="role-desc">Wasilisha taarifa za kila wiki</div>
+              </label>
+
+              <input class="role-card-input" type="radio" name="reg-role" id="role-zone" value="zone_leader" onchange="onRoleChange()"/>
+              <label class="role-card-label" for="role-zone">
+                <div class="role-icon">🗂️</div>
+                <div class="role-name">Kiongozi wa Kanda</div>
+                <div class="role-desc">Simamia vikundi vya kanda yako</div>
+              </label>
+            </div>
+            <div class="form-error" id="err-reg-role"></div>
+          </div>
+
+          <!-- Group name (shown for group leader) -->
+          <div class="form-group zone-group" id="group-name-group">
+            <label class="form-label">Jina la Kikundi Chako <span class="req">*</span></label>
+            <div class="input-wrap">
+              <span class="input-icon">🏘️</span>
+              <input type="text" id="reg-group-name" class="form-input" placeholder="Mfano: Kikundi cha Imani"/>
+            </div>
+            <div class="form-error" id="err-reg-group"></div>
+          </div>
+
+          <!-- Zone dropdown (shown for group leader) -->
+          <div class="form-group zone-group" id="zone-select-group">
+            <label class="form-label">Chagua Kanda Yako <span class="req">*</span></label>
+            <select id="reg-zone" class="form-select">
+              <option value="">— Chagua Kanda —</option>
+            </select>
+            <div class="form-hint">Kanda inayoongozwa na kiongozi wa kanda wako</div>
+            <div class="form-error" id="err-reg-zone"></div>
+          </div>
+
+          <div id="reg-error" class="alert alert-danger" style="display:none">
+            <span class="alert-icon">⚠️</span>
+            <span id="reg-error-msg"></span>
+          </div>
+
+          <button type="submit" class="btn btn-gold btn-block btn-lg" style="margin-top:8px">
+            Fungua Akaunti
+          </button>
+        </form>
+
+        <div style="text-align:center;margin-top:16px;font-size:.78rem;color:var(--text-muted)">
+          Una akaunti tayari?
+          <button class="btn btn-ghost btn-sm" onclick="switchView('login')" style="color:var(--primary);font-weight:600">Ingia hapa</button>
+        </div>
+      </div>
+
+      <!-- ── PENDING SCREEN ── -->
+      <div id="view-pending" style="display:none">
+        <div class="pending-screen">
+          <div class="pending-icon">⏳</div>
+          <h3 style="color:var(--primary);margin-bottom:10px">Akaunti Inasubiri Idhini</h3>
+          <p style="margin-bottom:20px">
+            Asante kwa kujisajili! Akaunti yako inasubiri idhini ya <strong id="pending-approver-type">kiongozi wa kanda</strong>.
+            Utaarifiwa punde akaunti yako itakapoidhinishwa.
+          </p>
+          <div class="alert alert-info">
+            <span class="alert-icon">ℹ️</span>
+            <div>Kama una swali, wasiliana na kiongozi wako wa kanda au mchungaji.</div>
+          </div>
+          <div style="margin-top:24px">
+            <button class="btn btn-outline" onclick="logout()">Ondoka</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REJECTED SCREEN ── -->
+      <div id="view-rejected" style="display:none">
+        <div class="pending-screen">
+          <div style="font-size:3.5rem;margin-bottom:16px">❌</div>
+          <h3 style="color:var(--danger);margin-bottom:10px">Akaunti Ilikataliwa</h3>
+          <p style="margin-bottom:16px">
+            Ombi lako la akaunti lilikataliwa.
+            Tafadhali wasiliana na kiongozi wako kwa maelezo zaidi.
+          </p>
+          <div class="alert alert-danger">
+            <span class="alert-icon">⚠️</span>
+            <div><strong>Sababu:</strong> <span id="rejection-reason">—</span></div>
+          </div>
+          <button class="btn btn-outline" style="margin-top:20px" onclick="logout()">Ondoka</button>
+        </div>
+      </div>
+
+    </div><!-- /.auth-card -->
+  </div><!-- /.auth-right -->
+
+</div><!-- /.auth-split -->
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+
+<script>
+  // Redirect if already logged in
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) return;
+    const profile = await getUserProfile(user.uid);
+    if (!profile) return;
+    handlePostLoginRedirect(profile);
+  });
+
+  function handlePostLoginRedirect(profile) {
+    if (profile.role === 'group_leader') {
+      if (profile.status === 'pending')   { showView('pending'); document.getElementById('pending-approver-type').textContent = 'kiongozi wa kanda'; return; }
+      if (profile.status === 'rejected')  { showView('rejected'); document.getElementById('rejection-reason').textContent = profile.rejectionReason || '—'; return; }
+    }
+    if (profile.role === 'zone_leader') {
+      if (profile.status === 'pending')   { showView('pending'); document.getElementById('pending-approver-type').textContent = 'msimamizi (admin)'; return; }
+      if (profile.status === 'rejected')  { showView('rejected'); document.getElementById('rejection-reason').textContent = profile.rejectionReason || '—'; return; }
+    }
+    window.location.href = 'dashboard.html';
+  }
+
+  // ── View switching ──
+  function showView(v) {
+    ['login','register','pending','rejected'].forEach(id => {
+      document.getElementById('view-'+id).style.display = 'none';
+    });
+    document.getElementById('view-'+v).style.display = 'block';
+  }
+
+  function switchView(v) { showView(v); }
+
+  // ── Password visibility toggle ──
+  function togglePass(id, btn) {
+    const inp = document.getElementById(id);
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+    else                         { inp.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  // ── Password strength ──
+  function checkStrength(val) {
+    const fill  = document.getElementById('strength-fill');
+    const label = document.getElementById('strength-label');
+    let score = 0;
+    if (val.length >= 6)  score++;
+    if (val.length >= 10) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const levels = [
+      { w:'0%',   bg:'transparent', txt:'' },
+      { w:'25%',  bg:'var(--danger)',  txt:'Dhaifu' },
+      { w:'50%',  bg:'var(--warning)', txt:'Wastani' },
+      { w:'75%',  bg:'var(--info)',    txt:'Nzuri' },
+      { w:'100%', bg:'var(--success)', txt:'Imara Sana' },
+    ];
+    const lv = levels[Math.min(score, 4)];
+    fill.style.width      = lv.w;
+    fill.style.background = lv.bg;
+    label.textContent     = lv.txt;
+    label.style.color     = lv.bg;
+  }
+
+  // ── Role change: show/hide zone + group fields ──
+  function onRoleChange() {
+    const role = document.querySelector('input[name="reg-role"]:checked')?.value;
+    const isLeader = role === 'group_leader';
+    document.getElementById('group-name-group').classList.toggle('visible', isLeader);
+    document.getElementById('zone-select-group').classList.toggle('visible', isLeader);
+    if (isLeader) loadZones();
+  }
+
+  let zonesLoaded = false;
+  async function loadZones() {
+    if (zonesLoaded) return;
+    const sel = document.getElementById('reg-zone');
+    try {
+      const zones = await getZones();
+      zones.forEach(z => {
+        const opt = document.createElement('option');
+        opt.value = z.id;
+        opt.textContent = z.name;
+        sel.appendChild(opt);
+      });
+      zonesLoaded = true;
+    } catch(e) {
+      sel.innerHTML = '<option value="">Tatizo la kupakia kanda</option>';
+    }
+  }
+
+  // ── LOGIN ──
+  async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    const errBox = document.getElementById('login-error');
+    const errMsg = document.getElementById('login-error-msg');
+    errBox.style.display = 'none';
+
+    if (!email || !pass) {
+      errMsg.textContent = 'Tafadhali jaza barua pepe na nenosiri.';
+      errBox.style.display = 'flex'; return;
+    }
+
+    setLoading(true);
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+      // onAuthStateChanged will handle redirect
+    } catch(err) {
+      errMsg.textContent = firebaseErrorMsg(err.code);
+      errBox.style.display = 'flex';
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── REGISTER ──
+  async function handleRegister(e) {
+    e.preventDefault();
+    // Clear errors
+    ['reg-name','reg-email','reg-pass','reg-role','reg-group','reg-zone']
+      .forEach(id => { const el = document.getElementById('err-'+id); if(el) el.textContent=''; });
+
+    const name   = document.getElementById('reg-name').value.trim();
+    const email  = document.getElementById('reg-email').value.trim();
+    const phone  = document.getElementById('reg-phone').value.trim();
+    const pass   = document.getElementById('reg-pass').value;
+    const role   = document.querySelector('input[name="reg-role"]:checked')?.value;
+    const group  = document.getElementById('reg-group-name').value.trim();
+    const zoneId = document.getElementById('reg-zone').value;
+
+    let valid = true;
+    if (!name)  { document.getElementById('err-reg-name').textContent  = 'Jina linahitajika.'; valid=false; }
+    if (!email) { document.getElementById('err-reg-email').textContent = 'Barua pepe inahitajika.'; valid=false; }
+    if (!pass || pass.length < 6) { document.getElementById('err-reg-pass').textContent = 'Nenosiri liwe na herufi 6+.'; valid=false; }
+    if (!role)  { document.getElementById('err-reg-role').textContent  = 'Chagua jukumu lako.'; valid=false; }
+    if (role === 'group_leader') {
+      if (!group)  { document.getElementById('err-reg-group').textContent = 'Jina la kikundi linahitajika.'; valid=false; }
+      if (!zoneId) { document.getElementById('err-reg-zone').textContent  = 'Chagua kanda yako.'; valid=false; }
+    }
+    if (!valid) return;
+
+    setLoading(true);
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pass);
+      const uid  = cred.user.uid;
+
+      const userData = {
+        name, email, phone,
+        role,
+        status: 'pending',   // all new accounts need approval
+        groupName: role === 'group_leader' ? group : null,
+        zoneId:    role === 'group_leader' ? zoneId : null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        approvedBy: null,
+        rejectionReason: null,
+      };
+
+      await db.collection('users').doc(uid).set(userData);
+      showToast('Akaunti imefunguliwa! Inasubiri idhini.', 'success');
+    } catch(err) {
+      const errBox = document.getElementById('reg-error');
+      document.getElementById('reg-error-msg').textContent = firebaseErrorMsg(err.code);
+      errBox.style.display = 'flex';
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function setLoading(show) {
+    document.getElementById('loading').style.display = show ? 'flex' : 'none';
+  }
+</script>
+</body>
+</html>
