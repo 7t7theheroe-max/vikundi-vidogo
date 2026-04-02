@@ -503,8 +503,12 @@ p  { line-height: 1.6;  color: var(--text-muted); }
   transition: transform var(--transition), box-shadow var(--transition);
 }
 .stat-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
+  border-color: var(--primary-light);
+}
+.stat-card[onclick]:active {
+  transform: translateY(-1px);
 }
 .stat-icon {
   width: 50px; height: 50px;

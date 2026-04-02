@@ -323,28 +323,28 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card">
+      <div class="stat-card" onclick="switchAdminTab('zones')" style="cursor:pointer" title="Tazama Kanda">
         <div class="stat-icon blue">🗺️</div>
         <div class="stat-info">
           <div class="stat-value" id="as-zones">0</div>
           <div class="stat-label">Kanda Zote</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="switchAdminTab('users');document.getElementById('user-filter-role').value='group_leader';document.getElementById('user-filter-status').value='approved';loadAllUsers()" style="cursor:pointer" title="Tazama Viongozi">
         <div class="stat-icon green">👥</div>
         <div class="stat-info">
           <div class="stat-value" id="as-leaders">0</div>
           <div class="stat-label">Viongozi Wote</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="switchAdminTab('reports')" style="cursor:pointer" title="Tazama Taarifa">
         <div class="stat-icon gold">📋</div>
         <div class="stat-info">
           <div class="stat-value" id="as-reports">0</div>
           <div class="stat-label">Taarifa Zote</div>
         </div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" onclick="switchAdminTab('users');document.getElementById('user-filter-role').value='';document.getElementById('user-filter-status').value='pending';loadAllUsers()" style="cursor:pointer" title="Tazama Wanasubiri">
         <div class="stat-icon red">⏳</div>
         <div class="stat-info">
           <div class="stat-value" id="as-pending">0</div>
