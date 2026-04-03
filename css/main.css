@@ -1152,6 +1152,8 @@ p  { line-height: 1.6;  color: var(--text-muted); }
 
   .sidebar {
     transform: translateX(-100%);
+    z-index: 200;
+    transition: transform .25s ease;
   }
   .sidebar.open {
     transform: translateX(0);
@@ -1159,13 +1161,16 @@ p  { line-height: 1.6;  color: var(--text-muted); }
   .sidebar-overlay {
     display: none;
     position: fixed; inset: 0;
-    background: rgba(17,28,78,.45);
-    z-index: 99;
+    background: rgba(13,59,122,.5);
+    z-index: 199;
   }
   .sidebar-overlay.open {
     display: block;
   }
-  .navbar { left: 0; }
+  .navbar {
+    left: 0;
+    z-index: 150;
+  }
   .main-content { margin-left: 0; }
   .hamburger { display: flex !important; }
 }

@@ -545,7 +545,7 @@ function renderSidebar(profile) {
   const list = items[profile.role] || [];
   nav.innerHTML = `<div class="nav-section-label">Menyu</div>` +
     list.map((item, i) =>
-      `<button class="nav-item ${i===0?'active':''}" onclick="${item.action};setActiveNav(this)">
+      `<button class="nav-item ${i===0?'active':''}" onclick="${item.action};setActiveNav(this);closeSidebar()">
          <span class="nav-icon">${item.icon}</span> ${item.label}
        </button>`
     ).join('');
@@ -1028,13 +1028,17 @@ function closeModalById(id) { document.getElementById(id).classList.remove('open
 
 // ══════════ SIDEBAR MOBILE ══════════
 function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('open',
-    document.getElementById('sidebar').classList.contains('open'));
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebar-overlay');
+  const isOpen   = sidebar.classList.toggle('open');
+  overlay.classList.toggle('open', isOpen);
+  // Prevent body scroll when sidebar open on mobile
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 function setLoading(show) {
