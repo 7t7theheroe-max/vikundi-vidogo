@@ -511,6 +511,50 @@
   function setLoading(show) {
     document.getElementById('loading').style.display = show ? 'flex' : 'none';
   }
+
+  // ── Real-time field validation ──
+  document.addEventListener('DOMContentLoaded', () => {
+    // Registration fields
+    [
+      { id: 'reg-name',  required: true,  check: v => v.trim().length >= 2 },
+      { id: 'reg-email', required: true,  check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) },
+      { id: 'reg-phone', required: false, check: v => !v || v.trim().length >= 9 },
+    ].forEach(({ id, required, check }) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('blur', () => {
+        const ok = check(el.value);
+        el.classList.toggle('valid', ok);
+        el.classList.toggle('error', !ok && (required || el.value.trim()));
+      });
+      el.addEventListener('input', () => {
+        if (el.classList.contains('error') && check(el.value)) {
+          el.classList.remove('error');
+          el.classList.add('valid');
+        }
+      });
+    });
+
+    // Password field — hook to strength checker
+    const pwdEl = document.getElementById('reg-password') || document.getElementById('reg-pass');
+    if (pwdEl) pwdEl.addEventListener('input', () => checkStrength(pwdEl.value));
+
+    // Login email
+    const loginEmail = document.getElementById('login-email');
+    if (loginEmail) {
+      loginEmail.addEventListener('blur', () => {
+        const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.value.trim());
+        loginEmail.classList.toggle('valid', ok);
+        loginEmail.classList.toggle('error', !ok && loginEmail.value.trim());
+      });
+      loginEmail.addEventListener('input', () => {
+        if (loginEmail.classList.contains('error') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.value.trim())) {
+          loginEmail.classList.remove('error');
+          loginEmail.classList.add('valid');
+        }
+      });
+    }
+  });
 </script>
 </body>
 </html>

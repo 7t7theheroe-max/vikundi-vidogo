@@ -205,9 +205,10 @@
         <h2 id="leader-welcome">Karibu! 🙏</h2>
         <p id="leader-sub">Leo ni siku nzuri ya kuwasilisha taarifa yako.</p>
       </div>
-      <a href="form.html" class="btn btn-gold">
-        ✏️ Wasilisha Taarifa
-      </a>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <a href="form.html" class="btn btn-gold">✏️ Wasilisha Taarifa</a>
+        <a href="members.html" class="btn btn-outline" style="color:#fff;border-color:rgba(255,255,255,.4)">👥 Washiriki</a>
+      </div>
     </div>
 
     <div class="stats-grid" id="leader-stats">
@@ -260,11 +261,11 @@
           <table class="table" id="leader-reports-table">
             <thead>
               <tr>
-                <th>Tarehe</th>
-                <th>Kikundi</th>
-                <th>Waliohudhuria</th>
-                <th>Hali</th>
-                <th>Tazama</th>
+                <th scope="col">Tarehe</th>
+                <th scope="col">Kikundi</th>
+                <th scope="col">Waliohudhuria</th>
+                <th scope="col">Hali</th>
+                <th scope="col">Tazama</th>
               </tr>
             </thead>
             <tbody id="leader-reports-body">
@@ -283,6 +284,7 @@
         <h2 id="zone-welcome">Dashibodi ya Kanda</h2>
         <p id="zone-sub">Simamia vikundi na taarifa za kanda yako</p>
       </div>
+      <button class="btn btn-outline btn-sm" onclick="setLoading(true);loadPanelData(currentProfile).finally(()=>setLoading(false))" title="Pakia upya data">🔄 Pakia Upya</button>
     </div>
 
     <div class="stats-grid">
@@ -371,12 +373,12 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Tarehe</th>
-                <th>Kikundi</th>
-                <th>Kiongozi</th>
-                <th>Waliohudhuria</th>
-                <th>Michango</th>
-                <th>Tazama</th>
+                <th scope="col">Tarehe</th>
+                <th scope="col">Kikundi</th>
+                <th scope="col">Kiongozi</th>
+                <th scope="col">Waliohudhuria</th>
+                <th scope="col">Michango</th>
+                <th scope="col">Tazama</th>
               </tr>
             </thead>
             <tbody id="zone-reports-body">
@@ -398,7 +400,7 @@
     </div>
 
     <div class="stats-grid">
-      <div class="stat-card" onclick="switchAdminTab('zones')" style="cursor:pointer" title="Tazama Kanda">
+      <div class="stat-card" onclick="switchAdminTab('zones')" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')switchAdminTab('zones')" title="Tazama Kanda">
         <div class="stat-icon blue">🗺️</div>
         <div class="stat-info">
           <div class="stat-value" id="as-zones">0</div>
@@ -412,7 +414,7 @@
           <div class="stat-label">Viongozi Wote</div>
         </div>
       </div>
-      <div class="stat-card" onclick="switchAdminTab('reports')" style="cursor:pointer" title="Tazama Taarifa">
+      <div class="stat-card" onclick="switchAdminTab('reports')" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' ')switchAdminTab('reports')" title="Tazama Taarifa">
         <div class="stat-icon gold">📋</div>
         <div class="stat-info">
           <div class="stat-value" id="as-reports">0</div>
@@ -429,11 +431,11 @@
     </div>
 
     <!-- Admin Tabs -->
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchAdminTab('users')" id="tab-btn-users">👤 Watumiaji</button>
-      <button class="tab-btn" onclick="switchAdminTab('zones')" id="tab-btn-zones">🗺️ Kanda</button>
-      <button class="tab-btn" onclick="switchAdminTab('reports')" id="tab-btn-reports">📋 Taarifa</button>
-      <button class="tab-btn" onclick="switchAdminTab('announcements')" id="tab-btn-announcements">📢 Matangazo</button>
+    <div class="tab-bar" role="tablist" aria-label="Sehemu za Msimamizi">
+      <button class="tab-btn active" role="tab" aria-selected="true"  aria-controls="admin-tab-users"          onclick="switchAdminTab('users')"         id="tab-btn-users">👤 Watumiaji</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" aria-controls="admin-tab-zones"          onclick="switchAdminTab('zones')"         id="tab-btn-zones">🗺️ Kanda</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" aria-controls="admin-tab-reports"        onclick="switchAdminTab('reports')"       id="tab-btn-reports">📋 Taarifa</button>
+      <button class="tab-btn"        role="tab" aria-selected="false" aria-controls="admin-tab-announcements"  onclick="switchAdminTab('announcements')" id="tab-btn-announcements">📢 Matangazo</button>
     </div>
 
     <!-- Users tab -->
@@ -461,12 +463,12 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>Jina</th>
-                  <th>Barua Pepe</th>
-                  <th>Jukumu</th>
-                  <th>Hali</th>
-                  <th>Tarehe ya Usajili</th>
-                  <th>Hatua</th>
+                  <th scope="col">Jina</th>
+                  <th scope="col">Barua Pepe</th>
+                  <th scope="col">Jukumu</th>
+                  <th scope="col">Hali</th>
+                  <th scope="col">Tarehe</th>
+                  <th scope="col">Hatua</th>
                 </tr>
               </thead>
               <tbody id="admin-users-body">
@@ -489,7 +491,7 @@
           <div class="table-wrap">
             <table class="table">
               <thead>
-                <tr><th>Jina la Kanda</th><th>Kiongozi wa Kanda</th><th>Vikundi</th><th>Hatua</th></tr>
+                <tr><th scope="col">Jina la Kanda</th><th scope="col">Kiongozi wa Kanda</th><th scope="col">Vikundi</th><th scope="col">Hatua</th></tr>
               </thead>
               <tbody id="admin-zones-body">
                 <tr><td colspan="4" style="text-align:center;padding:32px;color:var(--text-muted)">Inapakia...</td></tr>
@@ -520,13 +522,13 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>Tarehe</th>
-                  <th>Kikundi</th>
-                  <th>Kiongozi</th>
-                  <th>Kanda</th>
-                  <th>Waliohudhuria</th>
-                  <th>Hali</th>
-                  <th>Tazama</th>
+                  <th scope="col">Tarehe</th>
+                  <th scope="col">Kikundi</th>
+                  <th scope="col">Kiongozi</th>
+                  <th scope="col">Kanda</th>
+                  <th scope="col">Waliohudhuria</th>
+                  <th scope="col">Hali</th>
+                  <th scope="col">Tazama</th>
                 </tr>
               </thead>
               <tbody id="admin-reports-body">
@@ -1153,12 +1155,15 @@ function closeReportModal() { closeModalById('report-modal'); }
 
 // ══════════ ADMIN TABS ══════════
 function switchAdminTab(tabName) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    if (b.getAttribute('role') === 'tab') b.setAttribute('aria-selected', 'false');
+  });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   const tabEl = document.getElementById('admin-tab-' + tabName);
   if (tabEl) tabEl.classList.add('active');
   const btnEl = document.getElementById('tab-btn-' + tabName);
-  if (btnEl) btnEl.classList.add('active');
+  if (btnEl) { btnEl.classList.add('active'); btnEl.setAttribute('aria-selected', 'true'); }
 }
 
 // ══════════ MODAL HELPERS ══════════

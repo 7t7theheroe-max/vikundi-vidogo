@@ -456,12 +456,12 @@
       <div class="att-row">
         <div class="att-tile">
           <span class="emoji">✅</span>
-          <input type="number" id="att-present" min="0" placeholder="0" oninput="updateMemberCount()"/>
+          <input type="number" id="att-present" min="0" placeholder="0" oninput="this.dataset.manual=1;updateMemberCount()"/>
           <span class="att-lbl">Waliohudhuria</span>
         </div>
         <div class="att-tile">
           <span class="emoji">❌</span>
-          <input type="number" id="att-absent" min="0" placeholder="0"/>
+          <input type="number" id="att-absent" min="0" placeholder="0" oninput="this.dataset.manual=1"/>
           <span class="att-lbl">Hawakuhudhuria</span>
         </div>
         <div class="att-tile">
@@ -498,7 +498,11 @@
         <div class="member-list-wrap" id="member-list-wrap" style="display:none">
           <div class="member-list-header">
             <span>Jina la Mshiriki</span>
-            <span>Hali</span>
+            <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span>Hali</span>
+              <button type="button" class="btn btn-success btn-sm" style="padding:2px 8px;font-size:.7rem;height:auto" onclick="markAllPresent()">✅ Wote Wako</button>
+              <button type="button" class="btn btn-danger btn-sm"  style="padding:2px 8px;font-size:.7rem;height:auto" onclick="markAllAbsent()">❌ Wote Hawako</button>
+            </span>
             <span>Sababu (kama hakuhudhuria)</span>
           </div>
           <div id="member-list-body"></div>
@@ -906,10 +910,29 @@ function markDone(step) {
 // ── Validation ──
 function validateStep(step) {
   if (step === 0) {
-    const groupName = document.getElementById('f-group-name').value.trim();
-    const date      = document.getElementById('f-date').value;
-    if (!groupName) { showToast('Jina la kikundi linahitajika.', 'error'); return false; }
-    if (!date)      { showToast('Chagua tarehe ya mkutano.', 'error'); return false; }
+    const date = document.getElementById('f-date').value;
+    if (!date) { showToast('Chagua tarehe ya mkutano.', 'error'); return false; }
+    const purpose = document.querySelector('input[name="purpose"]:checked');
+    if (!purpose) { showToast('Chagua dhumuni la mkutano.', 'error'); return false; }
+  }
+  if (step === 1) {
+    const present = parseInt(document.getElementById('att-present').value) || 0;
+    if (present < 0) { showToast('Idadi ya waliohudhuria haiwezi kuwa hasi.', 'error'); return false; }
+    const rows = document.querySelectorAll('#member-list-body .member-list-row');
+    if (rows.length > 0) {
+      const unmarked = Array.from(rows).filter(r => !r.querySelector('.member-status')?.value).length;
+      if (unmarked > 0) {
+        showToast(`Weka hali ya washiriki wote — ${unmarked} hawajawekwa.`, 'warning');
+        return false;
+      }
+    }
+  }
+  if (step === 4) {
+    const other    = parseFloat(document.getElementById('c-other').value) || 0;
+    const otherDesc = document.getElementById('c-other-desc').value.trim();
+    if (other > 0 && !otherDesc) {
+      showToast('Eleza aina ya mchango wa "Mengineyo".', 'warning'); return false;
+    }
   }
   return true;
 }
@@ -959,9 +982,39 @@ function toggleReason(sel) {
   const reason = sel.nextElementSibling;
   reason.disabled = sel.value !== 'Hakuhudhuria';
   if (reason.disabled) reason.value = '';
+  syncAttendanceCount();
 }
 
-function updateMemberCount() { /* kept for compatibility */ }
+function syncAttendanceCount() {
+  const rows    = document.querySelectorAll('#member-list-body .member-list-row');
+  if (rows.length === 0) return;
+  const present = Array.from(rows).filter(r => r.querySelector('.member-status')?.value === 'Hudhuria').length;
+  const absent  = Array.from(rows).filter(r => r.querySelector('.member-status')?.value === 'Hakuhudhuria').length;
+  const presEl  = document.getElementById('att-present');
+  const absEl   = document.getElementById('att-absent');
+  // Only auto-fill if field is empty or was auto-filled before
+  if (!presEl.dataset.manual) presEl.value = present;
+  if (!absEl.dataset.manual)  absEl.value  = absent;
+}
+
+function markAllPresent() {
+  document.querySelectorAll('#member-list-body .member-status').forEach(sel => {
+    sel.value = 'Hudhuria';
+    sel.nextElementSibling.disabled = true;
+    sel.nextElementSibling.value    = '';
+  });
+  syncAttendanceCount();
+}
+
+function markAllAbsent() {
+  document.querySelectorAll('#member-list-body .member-status').forEach(sel => {
+    sel.value = 'Hakuhudhuria';
+    sel.nextElementSibling.disabled = false;
+  });
+  syncAttendanceCount();
+}
+
+function updateMemberCount() { syncAttendanceCount(); }
 
 // ── Contribution total ──
 function calcTotal() {

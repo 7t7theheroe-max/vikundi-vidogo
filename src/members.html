@@ -188,7 +188,19 @@
       <h2 id="group-title">Washiriki wa Kikundi</h2>
       <p id="group-sub">Simamia orodha ya washiriki wa kikundi chako</p>
     </div>
-    <button class="btn btn-gold" onclick="openAddModal()">+ Ongeza Mshiriki</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="input-wrap" style="width:190px">
+        <span class="input-icon">🔍</span>
+        <input type="text" id="member-search" class="form-input" placeholder="Tafuta mshiriki..."
+          oninput="filterMembers()" style="padding-left:36px;padding-top:8px;padding-bottom:8px;font-size:.82rem"/>
+      </div>
+      <select id="gender-filter" class="form-select" style="width:auto;padding:8px 10px;font-size:.82rem" onchange="filterMembers()">
+        <option value="">Jinsia Zote</option>
+        <option value="Mme">👨 Wanaume</option>
+        <option value="Mke">👩 Wanawake</option>
+      </select>
+      <button class="btn btn-gold" onclick="openAddModal()">+ Ongeza</button>
+    </div>
   </div>
 
   <!-- Stats -->
@@ -270,19 +282,19 @@ function renderMembers() {
 
   banner.style.display = 'none';
   container.innerHTML = members.map(m => `
-    <div class="member-card">
+    <div class="member-card member-item" data-name="${m.name.toLowerCase()}" data-gender="${m.gender||''}">
       <div class="member-avatar">${getInitials(m.name)}</div>
       <div class="member-info">
         <div class="mname">${m.name}</div>
         <div class="mmeta">
-          ${m.gender ? `<span>${m.gender === 'Mme' ? '👨' : '👩'} ${m.gender}</span>` : ''}
+          ${m.gender ? `<span>${m.gender === 'Mme' ? '👨 Mwanaume' : '👩 Mwanamke'}</span>` : ''}
           ${m.phone ? `&nbsp;•&nbsp; 📞 ${m.phone}` : ''}
-          ${m.notes ? `&nbsp;•&nbsp; ${m.notes}` : ''}
+          ${m.notes ? `&nbsp;•&nbsp; 📝 ${m.notes}` : ''}
         </div>
       </div>
       <div class="member-actions">
-        <button class="btn btn-outline btn-sm btn-icon" onclick="openEditModal('${m.id}')" title="Hariri">✏️</button>
-        <button class="btn btn-danger btn-sm btn-icon" onclick="openDeleteModal('${m.id}','${m.name.replace(/'/g,"\\'")}') " title="Futa">🗑</button>
+        <button class="btn btn-outline btn-sm btn-icon" onclick="openEditModal('${m.id}')" title="Hariri" aria-label="Hariri ${m.name}">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="openDeleteModal('${m.id}','${m.name.replace(/'/g,"\\'")}') " title="Futa" aria-label="Futa ${m.name}">🗑</button>
       </div>
     </div>
   `).join('');
@@ -380,6 +392,23 @@ async function confirmDelete() {
 // ── Modal helpers ──
 function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function filterMembers() {
+  const query  = (document.getElementById('member-search')?.value || '').toLowerCase().trim();
+  const gender = document.getElementById('gender-filter')?.value || '';
+  const items  = document.querySelectorAll('#members-container .member-item');
+  let visible  = 0;
+  items.forEach(item => {
+    const name      = (item.dataset.name || '');
+    const itemGender = item.dataset.gender || '';
+    const matchQ = !query  || name.includes(query);
+    const matchG = !gender || itemGender === gender;
+    item.style.display = (matchQ && matchG) ? '' : 'none';
+    if (matchQ && matchG) visible++;
+  });
+  // Update total display
+  document.getElementById('stat-total').textContent = visible;
+}
+
 function setLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
 </script>
 </body>

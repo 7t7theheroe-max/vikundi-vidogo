@@ -1189,3 +1189,202 @@ p  { line-height: 1.6;  color: var(--text-muted); }
 }
 .hamburger:hover { background: var(--bg); }
 .sidebar-overlay { display: none; }
+
+/* ═══════════════════════════════════════════
+   PROFESSIONAL ADDITIONS
+═══════════════════════════════════════════ */
+
+/* Purple variable (fix hardcoded) */
+:root {
+  --purple:       #7C3AED;
+  --purple-pale:  #F3F0FF;
+  --purple-light: #A78BFA;
+}
+
+/* Skeleton shimmer loader */
+@keyframes shimmer {
+  0%   { background-position: -468px 0; }
+  100% { background-position: 468px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg) 25%, #dde8f4 50%, var(--bg) 75%);
+  background-size: 936px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+.skeleton-text  { height: 14px; margin-bottom: 8px; }
+.skeleton-title { height: 20px; width: 60%; margin-bottom: 12px; }
+.skeleton-stat  { height: 48px; width: 80px; margin-bottom: 4px; }
+
+/* Focus-visible for keyboard accessibility */
+:focus-visible {
+  outline: 2.5px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+textarea:focus:not(:focus-visible) { outline: none; }
+
+/* Form input valid state */
+.form-input.valid,
+.form-select.valid,
+.form-textarea.valid {
+  border-color: var(--success);
+}
+.form-input.valid:focus,
+.form-select.valid:focus,
+.form-textarea.valid:focus {
+  box-shadow: 0 0 0 3px rgba(5,150,105,.12);
+}
+
+/* Button loading state */
+.btn.loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+
+/* Stat card accessible */
+.stat-card[onclick] {
+  cursor: pointer;
+}
+.stat-card[onclick]:focus-visible {
+  outline: 2.5px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Purple stat icon */
+.stat-icon.purple { background: var(--purple-pale); }
+
+/* Responsive tables — stack on mobile */
+@media (max-width: 640px) {
+  .table-wrap { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+  .table { font-size: 0.82rem; }
+  .table th, .table td { padding: 9px 10px; }
+  .table th:nth-child(n+4),
+  .table td:nth-child(n+4) { display: none; }
+}
+
+/* Better tab bar on mobile */
+@media (max-width: 640px) {
+  .tab-bar { overflow-x: auto; flex-wrap: nowrap; }
+  .tab-btn { white-space: nowrap; padding: 10px 12px; font-size: 0.8rem; }
+}
+
+/* Stats grid — 2 cols on mobile */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-value { font-size: 1.6rem; }
+  .stat-icon  { width: 40px; height: 40px; font-size: 1.2rem; }
+}
+
+/* Role cards mobile */
+@media (max-width: 480px) {
+  .role-cards { grid-template-columns: 1fr; }
+}
+
+/* Auth card mobile padding */
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 20px; border-radius: var(--radius-lg); }
+}
+
+/* Main content smaller padding on mobile */
+@media (max-width: 640px) {
+  .main-content { padding: 20px 14px 60px; }
+  .card-header  { padding: 16px 16px 0; }
+  .card-body    { padding: 16px; }
+}
+
+/* Print styles */
+@media print {
+  .sidebar, .navbar, .hamburger, .sidebar-overlay,
+  .btn, .tab-bar, .modal-overlay, .toast-container,
+  .loading-overlay { display: none !important; }
+  .main-content { margin: 0; padding: 0; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+  body { background: #fff; color: #000; font-size: 12px; }
+  .table th, .table td { padding: 6px 8px; }
+  @page { margin: 1.5cm; }
+}
+
+/* Scroll shadow on table wrap (shows more content indicator) */
+.table-wrap {
+  position: relative;
+}
+
+/* Tooltip */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition);
+  z-index: 100;
+}
+[data-tip]:hover::after { opacity: 1; }
+
+/* Better empty state */
+.empty-state .empty-icon { opacity: .35; }
+.empty-state a.btn { margin-top: 16px; }
+
+/* Divider with label */
+.divider-label {
+  display: flex; align-items: center; gap: 12px;
+  color: var(--text-muted); font-size: 0.78rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .06em; margin: 20px 0;
+}
+.divider-label::before,
+.divider-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+/* Info callout (used in form steps) */
+.info-callout {
+  background: var(--primary-pale);
+  border-left: 3px solid var(--primary);
+  padding: 10px 14px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.82rem;
+  color: var(--primary);
+  margin-bottom: 18px;
+}
+
+/* Approval card hover */
+.approval-card {
+  transition: box-shadow var(--transition);
+}
+.approval-card:hover {
+  box-shadow: var(--shadow);
+}
+
+/* Announcement pinned glow */
+.announcement-card.pinned {
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* Missing report card shimmer on load */
+.missing-card {
+  transition: opacity var(--transition);
+}
