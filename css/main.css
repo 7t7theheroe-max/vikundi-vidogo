@@ -1157,10 +1157,13 @@ p  { line-height: 1.6;  color: var(--text-muted); }
     transform: translateX(0);
   }
   .sidebar-overlay {
-    display: block !important;
+    display: none;
     position: fixed; inset: 0;
     background: rgba(17,28,78,.45);
     z-index: 99;
+  }
+  .sidebar-overlay.open {
+    display: block;
   }
   .navbar { left: 0; }
   .main-content { margin-left: 0; }

@@ -1029,12 +1029,12 @@ function closeModalById(id) { document.getElementById(id).classList.remove('open
 // ══════════ SIDEBAR MOBILE ══════════
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').style.display =
-    document.getElementById('sidebar').classList.contains('open') ? 'block' : 'none';
+  document.getElementById('sidebar-overlay').classList.toggle('open',
+    document.getElementById('sidebar').classList.contains('open'));
 }
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').style.display = 'none';
+  document.getElementById('sidebar-overlay').classList.remove('open');
 }
 
 function setLoading(show) {
