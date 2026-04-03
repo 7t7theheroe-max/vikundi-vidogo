@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Washiriki wa Kikundi — Vikundi Vidogo</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    .members-page { max-width: 720px; margin: 0 auto; padding: 32px 16px 80px; }
+
+    .members-header {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      border-radius: var(--radius-lg);
+      padding: 24px 28px;
+      color: #fff;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .members-header h2 { font-size: 1.25rem; margin-bottom: 4px; }
+    .members-header p  { color: rgba(255,255,255,.7); font-size:.85rem; }
+
+    .member-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 10px;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+    .member-card:hover { border-color: var(--primary-light); box-shadow: var(--shadow); }
+
+    .member-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .9rem;
+      flex-shrink: 0;
+    }
+    .member-info { flex: 1; }
+    .member-info .mname { font-weight: 700; font-size: .95rem; color: var(--text); }
+    .member-info .mmeta { font-size: .78rem; color: var(--text-muted); margin-top: 2px; }
+    .member-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* Add/Edit modal form */
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:480px) { .modal-grid { grid-template-columns: 1fr; } }
+
+    .setup-banner {
+      background: var(--info-pale);
+      border: 1.5px solid var(--primary-light);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 24px;
+    }
+    .setup-banner .banner-icon { font-size: 1.6rem; flex-shrink:0; }
+    .setup-banner h4 { color: var(--primary); margin-bottom: 4px; }
+    .setup-banner p  { font-size: .84rem; color: var(--text-muted); }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .mini-card {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      text-align: center;
+      box-shadow: var(--shadow-sm);
+    }
+    .mini-card .mv { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+    .mini-card .ml { font-size: .72rem; color: var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
+  </style>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div><span>Inapakia...</span>
+</div>
+
+<!-- Delete confirm modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Futa Mshiriki</h3>
+      <button class="modal-close" onclick="closeModal('delete-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p>Je, una hakika kutaka kumfuta <strong id="delete-name"></strong> kutoka kwenye orodha ya washiriki?</p>
+      <div class="alert alert-danger" style="margin-top:14px">
+        <span class="alert-icon">⚠️</span>
+        <div>Hatua hii haiwezi kurudishwa. Historia ya taarifa itabaki.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('delete-modal')">Ghairi</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Futa</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit member modal -->
+<div class="modal-overlay" id="member-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="member-modal-title">Ongeza Mshiriki</h3>
+      <button class="modal-close" onclick="closeModal('member-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-member-id"/>
+      <div class="modal-grid">
+        <div class="form-group">
+          <label class="form-label">Jina la Kwanza <span class="req">*</span></label>
+          <input type="text" id="m-firstname" class="form-input" placeholder="Jina la kwanza"/>
+          <div class="form-error" id="err-firstname"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jina la Ukoo <span class="req">*</span></label>
+          <input type="text" id="m-lastname" class="form-input" placeholder="Jina la ukoo"/>
+          <div class="form-error" id="err-lastname"></div>
+        </div>
+      </div>
+      <div class="modal-grid">
+        <div class="form-group">
+          <label class="form-label">Namba ya Simu</label>
+          <input type="tel" id="m-phone" class="form-input" placeholder="+255 7XX XXX XXX"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Jinsia</label>
+          <select id="m-gender" class="form-select">
+            <option value="">— Chagua —</option>
+            <option value="Mme">Mme</option>
+            <option value="Mke">Mke</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Maelezo / Kumbuka</label>
+        <textarea id="m-notes" class="form-textarea" placeholder="Mfano: Mwanafunzi, Mzee wa kanisa..." style="min-height:60px"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('member-modal')">Ghairi</button>
+      <button class="btn btn-primary" onclick="saveMember()">Hifadhi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Top bar -->
+<header class="form-topbar" style="position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm)">
+  <div style="display:flex;align-items:center;gap:10px;font-weight:700;color:var(--primary);font-size:.95rem">
+    <div style="width:34px;height:34px;background:var(--primary);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem">✝</div>
+    Washiriki wa Kikundi
+  </div>
+  <a href="dashboard.html" class="btn btn-outline btn-sm">← Rudi Dashibodini</a>
+</header>
+
+<div class="members-page">
+
+  <!-- Setup banner (shown only if no members yet) -->
+  <div class="setup-banner" id="setup-banner" style="display:none">
+    <div class="banner-icon">👋</div>
+    <div>
+      <h4>Karibu! Anza kuongeza washiriki wa kikundi chako</h4>
+      <p>Ongeza majina ya washiriki wote wa kikundi chako. Majina haya yatatumika kiotomatiki wakati wa kuwasilisha taarifa ya kila wiki — utahitaji tu kuweka alama ya kuhudhuria au kutokuhudhuria.</p>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="members-header">
+    <div>
+      <h2 id="group-title">Washiriki wa Kikundi</h2>
+      <p id="group-sub">Simamia orodha ya washiriki wa kikundi chako</p>
+    </div>
+    <button class="btn btn-gold" onclick="openAddModal()">+ Ongeza Mshiriki</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="mini-card">
+      <div class="mv" id="stat-total">0</div>
+      <div class="ml">Washiriki Wote</div>
+    </div>
+    <div class="mini-card">
+      <div class="mv" id="stat-male">0</div>
+      <div class="ml">Wanaume</div>
+    </div>
+    <div class="mini-card">
+      <div class="mv" id="stat-female">0</div>
+      <div class="ml">Wanawake</div>
+    </div>
+  </div>
+
+  <!-- Member list -->
+  <div id="members-container">
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h4>Inapakia washiriki...</h4>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+
+<script>
+let userProfile = null;
+let members = [];
+let deleteTargetId = null;
+
+requireAuth(async (user, profile) => {
+  if (profile.role !== 'group_leader' || profile.status !== 'approved') {
+    window.location.href = 'dashboard.html'; return;
+  }
+  userProfile = profile;
+  document.getElementById('group-title').textContent = profile.groupName || 'Kikundi Changu';
+  document.getElementById('group-sub').textContent = `Kiongozi: ${profile.name}`;
+  await loadMembers();
+});
+
+async function loadMembers() {
+  setLoading(true);
+  try {
+    members = await getGroupMembers(userProfile.uid);
+    renderMembers();
+  } catch(e) {
+    showToast('Tatizo la kupakia washiriki', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderMembers() {
+  const container = document.getElementById('members-container');
+  const banner    = document.getElementById('setup-banner');
+
+  // Stats
+  document.getElementById('stat-total').textContent  = members.length;
+  document.getElementById('stat-male').textContent   = members.filter(m => m.gender === 'Mme').length;
+  document.getElementById('stat-female').textContent = members.filter(m => m.gender === 'Mke').length;
+
+  if (members.length === 0) {
+    banner.style.display = 'flex';
+    container.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h4>Hakuna washiriki bado</h4>
+      <p>Bonyeza "Ongeza Mshiriki" kuanza kujenga orodha ya kikundi chako.</p>
+    </div>`;
+    return;
+  }
+
+  banner.style.display = 'none';
+  container.innerHTML = members.map(m => `
+    <div class="member-card">
+      <div class="member-avatar">${getInitials(m.name)}</div>
+      <div class="member-info">
+        <div class="mname">${m.name}</div>
+        <div class="mmeta">
+          ${m.gender ? `<span>${m.gender === 'Mme' ? '👨' : '👩'} ${m.gender}</span>` : ''}
+          ${m.phone ? `&nbsp;•&nbsp; 📞 ${m.phone}` : ''}
+          ${m.notes ? `&nbsp;•&nbsp; ${m.notes}` : ''}
+        </div>
+      </div>
+      <div class="member-actions">
+        <button class="btn btn-outline btn-sm btn-icon" onclick="openEditModal('${m.id}')" title="Hariri">✏️</button>
+        <button class="btn btn-danger btn-sm btn-icon" onclick="openDeleteModal('${m.id}','${m.name.replace(/'/g,"\\'")}') " title="Futa">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Add / Edit ──
+function openAddModal() {
+  document.getElementById('member-modal-title').textContent = 'Ongeza Mshiriki';
+  document.getElementById('edit-member-id').value = '';
+  ['m-firstname','m-lastname','m-phone','m-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('m-gender').value = '';
+  ['err-firstname','err-lastname'].forEach(id => document.getElementById(id).textContent = '');
+  openModal('member-modal');
+}
+
+function openEditModal(id) {
+  const m = members.find(x => x.id === id);
+  if (!m) return;
+  const nameParts = m.name.split(' ');
+  document.getElementById('member-modal-title').textContent = 'Hariri Mshiriki';
+  document.getElementById('edit-member-id').value = id;
+  document.getElementById('m-firstname').value = nameParts[0] || '';
+  document.getElementById('m-lastname').value  = nameParts.slice(1).join(' ') || '';
+  document.getElementById('m-phone').value     = m.phone || '';
+  document.getElementById('m-gender').value    = m.gender || '';
+  document.getElementById('m-notes').value     = m.notes || '';
+  openModal('member-modal');
+}
+
+async function saveMember() {
+  const firstname = document.getElementById('m-firstname').value.trim();
+  const lastname  = document.getElementById('m-lastname').value.trim();
+  let valid = true;
+  if (!firstname) { document.getElementById('err-firstname').textContent = 'Jina la kwanza linahitajika.'; valid=false; }
+  else document.getElementById('err-firstname').textContent = '';
+  if (!lastname)  { document.getElementById('err-lastname').textContent  = 'Jina la ukoo linahitajika.'; valid=false; }
+  else document.getElementById('err-lastname').textContent = '';
+  if (!valid) return;
+
+  const memberId = document.getElementById('edit-member-id').value;
+  const data = {
+    name:     `${firstname} ${lastname}`,
+    phone:    document.getElementById('m-phone').value.trim(),
+    gender:   document.getElementById('m-gender').value,
+    notes:    document.getElementById('m-notes').value.trim(),
+    leaderId: userProfile.uid,
+    groupName:userProfile.groupName,
+    zoneId:   userProfile.zoneId,
+    active:   true,
+  };
+
+  setLoading(true);
+  try {
+    if (memberId) {
+      await db.collection('members').doc(memberId).update(data);
+      showToast('Mshiriki ameharirishwa!', 'success');
+    } else {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      await db.collection('members').add(data);
+      showToast('Mshiriki ameongezwa!', 'success');
+    }
+    closeModal('member-modal');
+    await loadMembers();
+  } catch(e) {
+    showToast('Tatizo: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── Delete ──
+function openDeleteModal(id, name) {
+  deleteTargetId = id;
+  document.getElementById('delete-name').textContent = name;
+  openModal('delete-modal');
+}
+
+async function confirmDelete() {
+  if (!deleteTargetId) return;
+  setLoading(true);
+  try {
+    // Soft delete — mark inactive
+    await db.collection('members').doc(deleteTargetId).update({ active: false });
+    showToast('Mshiriki amefutwa.', 'success');
+    closeModal('delete-modal');
+    await loadMembers();
+  } catch(e) {
+    showToast('Tatizo: ' + e.message, 'error');
+  } finally {
+    setLoading(false);
+    deleteTargetId = null;
+  }
+}
+
+// ── Modal helpers ──
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function setLoading(show) { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+</script>
+</body>
+</html>

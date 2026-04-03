@@ -75,6 +75,43 @@
     /* Admin tabs */
     .admin-panel { display: none; }
     .admin-panel.active { display: block; }
+
+    /* Announcement card */
+    .announcement-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 1.5px solid var(--border);
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    .announcement-card .ann-title {
+      font-weight: 700; font-size: .92rem; color: var(--primary); margin-bottom: 4px;
+    }
+    .announcement-card .ann-body {
+      font-size: .85rem; color: var(--text); line-height: 1.5;
+    }
+    .announcement-card .ann-meta {
+      font-size: .72rem; color: var(--text-muted); margin-top: 6px;
+    }
+    .announcement-card.pinned {
+      border-color: var(--accent); background: var(--primary-pale);
+    }
+
+    /* Missing report alert */
+    .missing-card {
+      background: #fff8e1;
+      border: 1.5px solid #f9a825;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: .85rem;
+    }
+    .missing-card .missing-name { font-weight: 700; flex: 1; }
+    .missing-card .missing-days { font-size: .75rem; color: #e65100; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -195,6 +232,23 @@
           <div class="stat-label">Wastani wa Mahudhurio</div>
         </div>
       </div>
+      <div class="stat-card" onclick="window.location.href='members.html'" style="cursor:pointer" title="Simamia washiriki">
+        <div class="stat-icon purple">👤</div>
+        <div class="stat-info">
+          <div class="stat-value" id="ls-members">—</div>
+          <div class="stat-label">Washiriki</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Announcements for leader -->
+    <div class="card" style="margin-bottom:24px" id="leader-ann-card">
+      <div class="card-header">
+        <h3>📢 Matangazo</h3>
+      </div>
+      <div class="card-body" style="padding-top:12px" id="leader-announcements">
+        <div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Hakuna matangazo.</div>
+      </div>
     </div>
 
     <div class="card">
@@ -259,6 +313,27 @@
           <div class="stat-value" id="zs-att">0</div>
           <div class="stat-label">Jumla ya Mahudhurio</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Announcements for zone -->
+    <div class="card" style="margin-bottom:24px" id="zone-ann-card">
+      <div class="card-header">
+        <h3>📢 Matangazo</h3>
+      </div>
+      <div class="card-body" style="padding-top:12px" id="zone-announcements">
+        <div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Hakuna matangazo.</div>
+      </div>
+    </div>
+
+    <!-- Missing reports alert -->
+    <div class="card" style="margin-bottom:24px" id="missing-reports-card">
+      <div class="card-header">
+        <h3>⚠️ Vikundi Visivyowasilisha Taarifa</h3>
+        <span class="badge badge-pending" id="missing-count-badge">0</span>
+      </div>
+      <div class="card-body" style="padding-top:12px" id="missing-list">
+        <div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Inapakia...</div>
       </div>
     </div>
 
@@ -355,9 +430,10 @@
 
     <!-- Admin Tabs -->
     <div class="tab-bar">
-      <button class="tab-btn active" onclick="switchAdminTab('users')">👤 Watumiaji</button>
-      <button class="tab-btn" onclick="switchAdminTab('zones')">🗺️ Kanda</button>
-      <button class="tab-btn" onclick="switchAdminTab('reports')">📋 Taarifa Zote</button>
+      <button class="tab-btn active" onclick="switchAdminTab('users')" id="tab-btn-users">👤 Watumiaji</button>
+      <button class="tab-btn" onclick="switchAdminTab('zones')" id="tab-btn-zones">🗺️ Kanda</button>
+      <button class="tab-btn" onclick="switchAdminTab('reports')" id="tab-btn-reports">📋 Taarifa</button>
+      <button class="tab-btn" onclick="switchAdminTab('announcements')" id="tab-btn-announcements">📢 Matangazo</button>
     </div>
 
     <!-- Users tab -->
@@ -429,11 +505,15 @@
       <div class="card">
         <div class="card-header" style="padding-bottom:16px">
           <h3>Taarifa Zote</h3>
-          <select id="admin-report-filter" class="form-select" style="width:auto;padding:6px 10px;font-size:.82rem" onchange="loadAllReports()">
-            <option value="30">Mwezi 1 uliopita</option>
-            <option value="90">Miezi 3 iliyopita</option>
-            <option value="365">Mwaka huu</option>
-          </select>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <select id="admin-report-filter" class="form-select" style="width:auto;padding:6px 10px;font-size:.82rem" onchange="loadAllReports()">
+              <option value="30">Mwezi 1 uliopita</option>
+              <option value="90">Miezi 3 iliyopita</option>
+              <option value="365">Mwaka huu</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="exportReportsCSV()">⬇ CSV/Excel</button>
+            <button class="btn btn-outline btn-sm" onclick="printReports()">🖨 Chapisha</button>
+          </div>
         </div>
         <div class="card-body" style="padding-top:0">
           <div class="table-wrap">
@@ -457,6 +537,19 @@
         </div>
       </div>
     </div>
+    <!-- Announcements tab -->
+    <div class="tab-panel" id="admin-tab-announcements">
+      <div class="card">
+        <div class="card-header" style="padding-bottom:16px">
+          <h3>📢 Matangazo</h3>
+          <button class="btn btn-primary btn-sm" onclick="openAddAnnouncementModal()">+ Ongeza Tangazo</button>
+        </div>
+        <div class="card-body" style="padding-top:8px" id="admin-announcements">
+          <div style="color:var(--text-muted);font-size:.85rem;padding:16px 0">Inapakia...</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 </main><!-- /.main-content -->
@@ -483,6 +576,36 @@
     <div class="modal-footer">
       <button class="btn btn-outline" onclick="closeAddZoneModal()">Ghairi</button>
       <button class="btn btn-primary" onclick="saveNewZone()">Hifadhi Kanda</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add announcement modal -->
+<div class="modal-overlay" id="add-announcement-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Ongeza Tangazo</h3>
+      <button class="modal-close" onclick="closeModalById('add-announcement-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Kichwa cha Tangazo <span class="req">*</span></label>
+        <input type="text" id="ann-title" class="form-input" placeholder="Kichwa kifupi cha tangazo"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ujumbe <span class="req">*</span></label>
+        <textarea id="ann-body" class="form-textarea" rows="4" placeholder="Andika tangazo hapa..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="ann-pinned" style="width:16px;height:16px"/>
+          📌 Bana juu (Pinned) — lionyeshe kwanza
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('add-announcement-modal')">Ghairi</button>
+      <button class="btn btn-primary" onclick="saveAnnouncement()">Chapisha Tangazo</button>
     </div>
   </div>
 </div>
@@ -526,7 +649,9 @@ function renderSidebar(profile) {
     group_leader: [
       { icon:'🏠', label:'Dashibodi',          action:"setPage('home')" },
       { icon:'✏️', label:'Wasilisha Taarifa',  action:"window.location.href='form.html'" },
+      { icon:'👥', label:'Washiriki Wangu',    action:"window.location.href='members.html'" },
       { icon:'📁', label:'Taarifa Zangu',       action:"setPage('my-reports')" },
+      { icon:'👤', label:'Wasifu Wangu',        action:"window.location.href='profile.html'" },
     ],
     zone_leader: [
       { icon:'🏠', label:'Dashibodi',           action:"setPage('home')" },
@@ -539,6 +664,7 @@ function renderSidebar(profile) {
       { icon:'👤', label:'Watumiaji',           action:"switchAdminTab('users')" },
       { icon:'🗺️', label:'Kanda',              action:"switchAdminTab('zones')" },
       { icon:'📋', label:'Taarifa Zote',        action:"switchAdminTab('reports')" },
+      { icon:'📢', label:'Matangazo',           action:"switchAdminTab('announcements')" },
     ],
   };
 
@@ -586,6 +712,16 @@ async function loadLeaderDashboard(profile) {
   document.getElementById('leader-welcome').textContent = `Karibu, ${profile.name.split(' ')[0]}! 🙏`;
   document.getElementById('leader-sub').textContent =
     `Kikundi: ${profile.groupName || '—'} • Leo ni ${new Date().toLocaleDateString('sw-TZ',{weekday:'long',day:'numeric',month:'long'})}`;
+
+  // Load member count
+  try {
+    const mSnap = await db.collection('members')
+      .where('leaderId','==',currentUser.uid).where('active','==',true).get();
+    document.getElementById('ls-members').textContent = mSnap.size;
+  } catch(e) { document.getElementById('ls-members').textContent = '—'; }
+
+  // Load announcements
+  await loadAnnouncements('leader-announcements');
 
   const snap = await db.collection('reports')
     .where('leaderId','==',currentUser.uid)
@@ -646,12 +782,19 @@ async function loadZoneDashboard(profile) {
   const allGroups = groupsSnap.docs.map(d=>({uid:d.id,...d.data()}));
   document.getElementById('zs-groups').textContent = allGroups.filter(g=>g.status==='approved').length;
 
-  // Pending approvals
-  const pending = allGroups.filter(g=>g.status==='pending');
-  document.getElementById('zs-pending').textContent = pending.length;
-  document.getElementById('pending-count-badge').textContent = pending.length;
+  // Pending approvals — only what this zone leader can approve (group_leaders in same zone)
+  const pending    = allGroups.filter(g => g.status === 'pending');
+  const approvable = pending.filter(u => canApprove(profile, u.role));
+  document.getElementById('zs-pending').textContent          = approvable.length;
+  document.getElementById('pending-count-badge').textContent  = approvable.length;
+  renderApprovalList(approvable);
 
-  renderApprovalList(pending);
+  // Load missing reports
+  await loadMissingReports(zoneId);
+
+  // Load announcements
+  await loadAnnouncements('zone-announcements');
+
   await loadZoneReports(zoneId);
 }
 
@@ -730,7 +873,7 @@ async function loadAdminDashboard(profile) {
   document.getElementById('as-reports').textContent = reportsSnap.size;
   document.getElementById('as-pending').textContent = pending.length;
 
-  await Promise.all([loadAllUsers(), loadAllZones(), loadAllReports()]);
+  await Promise.all([loadAllUsers(), loadAllZones(), loadAllReports(), loadAnnouncements('admin-announcements')]);
 }
 
 async function loadAllUsers() {
@@ -1010,15 +1153,12 @@ function closeReportModal() { closeModalById('report-modal'); }
 
 // ══════════ ADMIN TABS ══════════
 function switchAdminTab(tabName) {
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-  const tabEl = document.getElementById('admin-tab-'+tabName);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tabEl = document.getElementById('admin-tab-' + tabName);
   if (tabEl) tabEl.classList.add('active');
-  event?.target?.classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>{
-    if (b.textContent.includes(tabName==='users'?'Watumiaji':tabName==='zones'?'Kanda':'Taarifa'))
-      b.classList.add('active');
-  });
+  const btnEl = document.getElementById('tab-btn-' + tabName);
+  if (btnEl) btnEl.classList.add('active');
 }
 
 // ══════════ MODAL HELPERS ══════════
@@ -1039,6 +1179,144 @@ function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ══════════ ANNOUNCEMENTS ══════════
+async function loadAnnouncements(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  try {
+    const anns = await getAnnouncements(5);
+    if (anns.length === 0) {
+      container.innerHTML = `<div style="color:var(--text-muted);font-size:.85rem;padding:12px 0">Hakuna matangazo.</div>`;
+      return;
+    }
+    // Pinned first
+    anns.sort((a,b) => (b.pinned?1:0)-(a.pinned?1:0));
+    container.innerHTML = anns.map(a => `
+      <div class="announcement-card ${a.pinned?'pinned':''}">
+        ${a.pinned ? '<span style="font-size:.72rem;font-weight:700;color:var(--primary);text-transform:uppercase">📌 Imebaniwa</span>' : ''}
+        <div class="ann-title">${a.title||'Tangazo'}</div>
+        <div class="ann-body">${(a.body||'').replace(/\n/g,'<br>')}</div>
+        <div class="ann-meta">🗓 ${formatDate(a.createdAt)}${containerId==='admin-announcements'?` &nbsp;•&nbsp; <button class="btn btn-danger btn-sm btn-icon" onclick="deleteAnnouncement('${a.id}')" style="padding:2px 8px;font-size:.72rem">🗑</button>`:''}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    if (container) container.innerHTML = `<div style="color:var(--text-muted);font-size:.85rem">Tatizo la kupakia matangazo.</div>`;
+  }
+}
+
+function openAddAnnouncementModal() {
+  document.getElementById('ann-title').value = '';
+  document.getElementById('ann-body').value  = '';
+  document.getElementById('ann-pinned').checked = false;
+  openModal('add-announcement-modal');
+}
+
+async function saveAnnouncement() {
+  const title  = document.getElementById('ann-title').value.trim();
+  const body   = document.getElementById('ann-body').value.trim();
+  const pinned = document.getElementById('ann-pinned').checked;
+  if (!title || !body) { showToast('Jaza kichwa na ujumbe.','warning'); return; }
+  setLoading(true);
+  try {
+    await db.collection('announcements').add({
+      title, body, pinned,
+      authorId: currentUser.uid,
+      authorName: currentProfile.name,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    showToast('Tangazo limechapishwa!','success');
+    closeModalById('add-announcement-modal');
+    await loadAnnouncements('admin-announcements');
+  } catch(e) { showToast('Tatizo: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+async function deleteAnnouncement(id) {
+  if (!confirm('Futa tangazo hili?')) return;
+  setLoading(true);
+  try {
+    await db.collection('announcements').doc(id).delete();
+    showToast('Tangazo limefutwa.','success');
+    await loadAnnouncements('admin-announcements');
+  } catch(e) { showToast('Tatizo: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+// ══════════ MISSING REPORTS ══════════
+async function loadMissingReports(zoneId) {
+  const container = document.getElementById('missing-list');
+  const badge     = document.getElementById('missing-count-badge');
+  if (!container) return;
+  try {
+    const missing = await getMissingReports(zoneId);
+    if (badge) badge.textContent = missing.length;
+    if (missing.length === 0) {
+      container.innerHTML = `<div style="color:var(--success);font-size:.85rem;padding:12px 0">✅ Vikundi vyote vimewasilisha taarifa wiki hii!</div>`;
+      return;
+    }
+    container.innerHTML = missing.map(l => `
+      <div class="missing-card">
+        <span style="font-size:1.2rem">⚠️</span>
+        <span class="missing-name">${l.groupName||l.name||'—'}</span>
+        <span class="missing-days">Hawajawasilisha wiki hii</span>
+      </div>
+    `).join('');
+  } catch(e) {
+    if (container) container.innerHTML = `<div style="color:var(--text-muted);font-size:.85rem">Tatizo la kupakia.</div>`;
+  }
+}
+
+// ══════════ EXPORT ══════════
+let _exportReports = [];
+
+async function exportReportsCSV() {
+  const days  = parseInt(document.getElementById('admin-report-filter')?.value||30);
+  const since = new Date(); since.setDate(since.getDate()-days);
+  setLoading(true);
+  try {
+    const snap    = await db.collection('reports').orderBy('submittedAt','desc').limit(500).get();
+    const reports = snap.docs.map(d=>({id:d.id,...d.data()})).filter(r=>r.submittedAt?.toDate()>since);
+    _exportReports = reports;
+
+    const headers = ['Tarehe','Kikundi','Kiongozi','Kanda','Waliohudhuria','Hawakuhudhuria','Wapya','Wastani','Umoja','Zaka','Sadaka','Ujenzi','Maskini','Mengineyo','Wageni Wasiobatizwa','Masomo Biblia Nje','Changamoto','Mafanikio','Hali'];
+    const rows = reports.map(r => [
+      r.taarifa_za_msingi?.tarehe || formatDate(r.submittedAt),
+      r.groupName||'',
+      r.leaderName||'',
+      r.zoneName||'',
+      r.mahudhurio?.waliohudhuria||'',
+      r.mahudhurio?.hawakuhudhuria||'',
+      r.mahudhurio?.wapya_wageni||'',
+      r.mahudhurio?.wastani_mwezi||'',
+      r.mahudhurio?.kiwango_umoja||'',
+      r.michango?.zaka||'',
+      r.michango?.sadaka||'',
+      r.michango?.ujenzi||'',
+      r.michango?.maskini||'',
+      r.michango?.mengineyo||'',
+      r.uinjilisti?.wageni_wasiobatizwa||'',
+      r.uinjilisti?.masomo_biblia_nje||'',
+      (r.uinjilisti?.changamoto||'').replace(/,/g,';').replace(/\n/g,' '),
+      (r.uinjilisti?.mafanikio||'').replace(/,/g,';').replace(/\n/g,' '),
+      r.status||'submitted',
+    ].map(v=>`"${v}"`).join(','));
+
+    const csv  = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `taarifa_vikundi_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`Taarifa ${reports.length} zimepakuliwa (CSV).`,'success');
+  } catch(e) { showToast('Tatizo la kuexport: '+e.message,'error'); }
+  finally { setLoading(false); }
+}
+
+function printReports() {
+  window.print();
 }
 
 function setLoading(show) {

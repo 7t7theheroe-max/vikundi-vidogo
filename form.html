@@ -494,8 +494,8 @@
 
       <div class="form-group">
         <label class="form-label">Orodha ya Washiriki</label>
-        <div class="info-callout">Ongeza majina ya washiriki na hali yao ya mkutano huu.</div>
-        <div class="member-list-wrap">
+        <div class="info-callout" id="members-callout">Inapakia washiriki...</div>
+        <div class="member-list-wrap" id="member-list-wrap" style="display:none">
           <div class="member-list-header">
             <span>Jina la Mshiriki</span>
             <span>Hali</span>
@@ -503,7 +503,12 @@
           </div>
           <div id="member-list-body"></div>
         </div>
-        <button class="add-member-btn" onclick="addMember()">+ Ongeza Mshiriki</button>
+        <div id="no-members-notice" style="display:none">
+          <div class="alert alert-warning">
+            <span class="alert-icon">⚠️</span>
+            <div>Orodha ya washiriki iko tupu. <a href="members.html" style="font-weight:700;color:var(--primary)">Bonyeza hapa kuongeza washiriki →</a></div>
+          </div>
+        </div>
       </div>
 
       <div class="form-group">
@@ -545,15 +550,18 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Washiriki Wanaojifunza Biblia Nyumbani</label>
-        <div class="pill-row">
-          <input class="pill-opt" type="radio" name="home-study" id="hs1" value="Wengi (zaidi ya nusu)"/>
-          <label for="hs1">😊 Wengi (zaidi ya nusu)</label>
-          <input class="pill-opt" type="radio" name="home-study" id="hs2" value="Wachache (chini ya nusu)"/>
-          <label for="hs2">😐 Wachache</label>
-          <input class="pill-opt" type="radio" name="home-study" id="hs3" value="Hawakai wakijifunza"/>
-          <label for="hs3">😞 Hawakai wakijifunza</label>
+        <label class="form-label">Washiriki Wanaojifunza Biblia / Lesoni Nyumbani</label>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div class="input-wrap" style="width:120px">
+            <span class="input-icon">📚</span>
+            <input type="number" id="f-home-study-num" class="form-input" min="0" placeholder="0"
+              oninput="updateHomeStudyLabel()"/>
+          </div>
+          <div id="home-study-label" style="font-size:.88rem;font-weight:600;color:var(--text-muted);padding:8px 14px;background:var(--bg);border-radius:var(--radius-full);border:1.5px solid var(--border)">
+            Ingiza idadi
+          </div>
         </div>
+        <div class="form-hint">Idadi ya washiriki wanaojifunza Biblia au lesoni nyumbani kati ya mkutano na mkutano</div>
       </div>
 
       <div class="form-group">
@@ -828,8 +836,12 @@ requireAuth(async (user, profile) => {
   buildStepDots();
   updateProgress(0);
 
-  // Add 5 default member rows
-  for (let i = 0; i < 5; i++) addMember();
+  // Load members from Firestore
+  await loadMembersFromFirestore();
+
+  // Auto-fill monthly average from last 4 reports
+  const avg = await calcMonthlyAverage(profile.uid);
+  if (avg > 0) document.getElementById('att-avg').value = avg;
 
   // Load draft if exists
   loadDraft();
@@ -902,22 +914,45 @@ function validateStep(step) {
   return true;
 }
 
-// ── Member list ──
-function addMember() {
-  memberCount++;
-  const body = document.getElementById('member-list-body');
-  const row  = document.createElement('div');
-  row.className = 'member-list-row';
-  row.innerHTML = `
-    <input type="text" class="form-input member-name" placeholder="Jina la mshiriki ${memberCount}"/>
-    <select class="form-select member-status" onchange="toggleReason(this)">
-      <option value="">— Hali —</option>
-      <option value="Hudhuria">✅ Hudhuria</option>
-      <option value="Hakuhudhuria">❌ Hakuhudhuria</option>
-    </select>
-    <input type="text" class="form-input member-reason" placeholder="Sababu..." disabled/>
-  `;
-  body.appendChild(row);
+// ── Member list (loaded from Firestore) ──
+async function loadMembersFromFirestore() {
+  const callout = document.getElementById('members-callout');
+  const wrap    = document.getElementById('member-list-wrap');
+  const notice  = document.getElementById('no-members-notice');
+  const body    = document.getElementById('member-list-body');
+
+  callout.textContent = 'Inapakia washiriki...';
+  try {
+    const members = await getGroupMembers(userProfile.uid);
+    if (members.length === 0) {
+      callout.style.display = 'none';
+      wrap.style.display    = 'none';
+      notice.style.display  = 'block';
+      return;
+    }
+    callout.textContent   = `Washiriki ${members.length} wamepatikana. Weka alama ya hali ya kila mmoja.`;
+    wrap.style.display    = 'block';
+    notice.style.display  = 'none';
+    body.innerHTML = members.map(m => `
+      <div class="member-list-row" data-member-id="${m.id}">
+        <div style="font-weight:600;font-size:.88rem;padding:8px 4px">${m.name}</div>
+        <select class="form-select member-status" onchange="toggleReason(this)">
+          <option value="">— Hali —</option>
+          <option value="Hudhuria">✅ Hudhuria</option>
+          <option value="Hakuhudhuria">❌ Hakuhudhuria</option>
+        </select>
+        <input type="text" class="form-input member-reason" placeholder="Sababu..." disabled/>
+      </div>
+    `).join('');
+  } catch(e) {
+    callout.textContent = 'Tatizo la kupakia washiriki.';
+  }
+}
+
+function updateHomeStudyLabel() {
+  const num   = parseInt(document.getElementById('f-home-study-num').value) || 0;
+  const total = document.querySelectorAll('#member-list-body .member-list-row').length;
+  document.getElementById('home-study-label').textContent = homeStudyLabel(num, total || num);
 }
 
 function toggleReason(sel) {
@@ -926,9 +961,7 @@ function toggleReason(sel) {
   if (reason.disabled) reason.value = '';
 }
 
-function updateMemberCount() {
-  // Could auto-populate based on count in future
-}
+function updateMemberCount() { /* kept for compatibility */ }
 
 // ── Contribution total ──
 function calcTotal() {
@@ -975,13 +1008,14 @@ function clearDraft() {
 }
 
 function collectFormData() {
-  // Collect member list
+  // Collect member attendance list (loaded from Firestore)
   const members = [];
   document.querySelectorAll('#member-list-body .member-list-row').forEach(row => {
-    const name   = row.querySelector('.member-name')?.value.trim();
-    const status = row.querySelector('.member-status')?.value;
-    const reason = row.querySelector('.member-reason')?.value.trim();
-    if (name) members.push({ name, status, reason });
+    const memberId = row.dataset.memberId || '';
+    const name     = row.querySelector('div')?.textContent.trim() || '';
+    const status   = row.querySelector('.member-status')?.value;
+    const reason   = row.querySelector('.member-reason')?.value.trim();
+    if (name) members.push({ memberId, name, status, reason });
   });
 
   return {
@@ -1001,7 +1035,7 @@ function collectFormData() {
     // Somo
     f_topic:     document.getElementById('f-topic').value,
     f_scripture: document.getElementById('f-scripture').value,
-    home_study:  document.querySelector('input[name="home-study"]:checked')?.value || '',
+    home_study_num: document.getElementById('f-home-study-num').value || '0',
     prayer_needs:document.getElementById('f-prayer-needs').value,
     answered:    document.getElementById('f-answered').value,
     // Utembeleaji
@@ -1066,7 +1100,8 @@ async function submitReport() {
       somo_na_maombi: {
         mada:              d.f_topic,
         fungu_biblia:      d.f_scripture,
-        kujifunza_nyumbani:d.home_study,
+        kujifunza_nyumbani: Number(d.home_study_num) || 0,
+        kujifunza_lebo: homeStudyLabel(Number(d.home_study_num) || 0, d.members.length || Number(d.home_study_num) || 0),
         mahitaji_maombi:   d.prayer_needs,
         maombi_yaliyojibiwa: d.answered,
       },

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wasifu Wangu — Vikundi Vidogo</title>
+  <link rel="stylesheet" href="css/main.css"/>
+  <style>
+    .profile-page { max-width: 680px; margin: 0 auto; padding: 32px 16px 80px; }
+
+    .profile-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+    .profile-hero {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 32px 28px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .profile-avatar-lg {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.2);
+      border: 3px solid rgba(255,255,255,.4);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .profile-hero-info { flex: 1; }
+    .profile-hero-info h2 { color: #fff; font-size: 1.3rem; margin-bottom: 4px; }
+    .profile-hero-info .role-badge {
+      display: inline-block;
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: var(--radius-full);
+      padding: 3px 12px;
+      font-size: .75rem;
+      color: rgba(255,255,255,.9);
+      font-weight: 600;
+    }
+
+    .profile-body { padding: 24px 28px; }
+
+    .info-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-row .ir-label {
+      min-width: 160px; color: var(--text-muted); font-weight: 600; font-size: .82rem;
+    }
+    .info-row .ir-value { color: var(--text); flex: 1; }
+
+    .status-badge-profile {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: var(--radius-full);
+      font-weight: 700; font-size: .82rem;
+    }
+    .status-approved { background: var(--success-pale); color: var(--success); }
+    .status-pending  { background: #fff8e1; color: #e65100; }
+    .status-rejected { background: #ffebee; color: #c62828; }
+  </style>
+</head>
+<body>
+
+<div class="toast-container" id="toast-container"></div>
+<div class="loading-overlay" id="loading" style="display:none">
+  <div class="spinner"></div><span>Inapakia...</span>
+</div>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Hariri Maelezo Yangu</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Jina Kamili <span class="req">*</span></label>
+        <input type="text" id="e-name" class="form-input" placeholder="Jina kamili"/>
+        <div class="form-error" id="err-name"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Namba ya Simu</label>
+        <div class="input-wrap">
+          <span class="input-icon">📞</span>
+          <input type="tel" id="e-phone" class="form-input" placeholder="+255 7XX XXX XXX"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mahali pa Mkutano (Kila Wiki)</label>
+        <div class="input-wrap">
+          <span class="input-icon">📍</span>
+          <input type="text" id="e-location" class="form-input" placeholder="Mfano: Nyumbani kwa Ndugu James, Ukonga"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Siku na Muda wa Mkutano</label>
+        <div class="input-wrap">
+          <span class="input-icon">🕐</span>
+          <input type="text" id="e-schedule" class="form-input" placeholder="Mfano: Jumanne, 6:30pm"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Ghairi</button>
+      <button class="btn btn-primary" onclick="saveProfile()">Hifadhi Mabadiliko</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change password modal -->
+<div class="modal-overlay" id="pwd-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Badilisha Nenosiri</h3>
+      <button class="modal-close" onclick="closeModalById('pwd-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nenosiri Jipya <span class="req">*</span></label>
+        <input type="password" id="new-pwd" class="form-input" placeholder="Angalau herufi 6"/>
+        <div class="form-error" id="err-pwd"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Thibitisha Nenosiri <span class="req">*</span></label>
+        <input type="password" id="confirm-pwd" class="form-input" placeholder="Rudia nenosiri jipya"/>
+        <div class="form-error" id="err-confirm-pwd"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModalById('pwd-modal')">Ghairi</button>
+      <button class="btn btn-primary" onclick="changePassword()">Badilisha</button>
+    </div>
+  </div>
+</div>
+
+<!-- Top bar -->
+<header class="form-topbar" style="position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--shadow-sm)">
+  <div style="display:flex;align-items:center;gap:10px;font-weight:700;color:var(--primary);font-size:.95rem">
+    <div style="width:34px;height:34px;background:var(--primary);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1rem">✝</div>
+    Wasifu Wangu
+  </div>
+  <a href="dashboard.html" class="btn btn-outline btn-sm">← Rudi Dashibodini</a>
+</header>
+
+<div class="profile-page">
+
+  <div class="profile-card">
+    <div class="profile-hero">
+      <div class="profile-avatar-lg" id="prof-avatar">?</div>
+      <div class="profile-hero-info">
+        <h2 id="prof-name">Inapakia...</h2>
+        <span class="role-badge" id="prof-role">—</span>
+      </div>
+      <button class="btn btn-gold btn-sm" onclick="openEditModal()">✏️ Hariri</button>
+    </div>
+    <div class="profile-body">
+      <div class="info-row">
+        <span class="ir-label">📧 Barua Pepe</span>
+        <span class="ir-value" id="prof-email">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">📞 Namba ya Simu</span>
+        <span class="ir-value" id="prof-phone">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">🏘️ Kikundi</span>
+        <span class="ir-value" id="prof-group">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">🗺️ Kanda</span>
+        <span class="ir-value" id="prof-zone">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">📍 Mahali pa Mkutano</span>
+        <span class="ir-value" id="prof-location">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">🕐 Ratiba ya Mkutano</span>
+        <span class="ir-value" id="prof-schedule">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">✅ Hali ya Akaunti</span>
+        <span class="ir-value" id="prof-status">—</span>
+      </div>
+      <div class="info-row">
+        <span class="ir-label">📅 Akaunti Iliundwa</span>
+        <span class="ir-value" id="prof-created">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card">
+    <div class="card-header"><h3>⚙️ Vitendo</h3></div>
+    <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;padding-top:16px">
+      <a href="members.html" class="btn btn-primary">👥 Simamia Washiriki</a>
+      <a href="form.html"    class="btn btn-gold">✏️ Wasilisha Taarifa</a>
+      <button class="btn btn-outline" onclick="openPwdModal()">🔒 Badilisha Nenosiri</button>
+      <button class="btn btn-danger"  onclick="logout()">🚪 Ondoka</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+
+<script>
+let userProfile = null;
+
+requireAuth(async (user, profile) => {
+  userProfile = profile;
+  renderProfile(user, profile);
+});
+
+function renderProfile(user, profile) {
+  document.getElementById('prof-avatar').textContent   = getInitials(profile.name);
+  document.getElementById('prof-name').textContent     = profile.name || '—';
+  document.getElementById('prof-role').textContent     = ROLE_LABELS[profile.role] || profile.role;
+  document.getElementById('prof-email').textContent    = user.email || '—';
+  document.getElementById('prof-phone').textContent    = profile.phone || '—';
+  document.getElementById('prof-group').textContent    = profile.groupName || '—';
+  document.getElementById('prof-location').textContent = profile.meetingLocation || '—';
+  document.getElementById('prof-schedule').textContent = profile.meetingSchedule  || '—';
+  document.getElementById('prof-created').textContent  = formatDate(profile.createdAt);
+
+  const statusMap = {
+    approved: `<span class="status-badge-profile status-approved">✅ Imeidhinishwa</span>`,
+    pending:  `<span class="status-badge-profile status-pending">⏳ Inasubiri Idhini</span>`,
+    rejected: `<span class="status-badge-profile status-rejected">❌ Ilikataliwa</span>`,
+  };
+  document.getElementById('prof-status').innerHTML = statusMap[profile.status] || profile.status;
+
+  // Load zone name
+  if (profile.zoneId) {
+    db.collection('zones').doc(profile.zoneId).get().then(s => {
+      document.getElementById('prof-zone').textContent = s.exists ? s.data().name : '—';
+    });
+  } else {
+    document.getElementById('prof-zone').textContent = '—';
+  }
+}
+
+function openEditModal() {
+  document.getElementById('e-name').value     = userProfile.name     || '';
+  document.getElementById('e-phone').value    = userProfile.phone    || '';
+  document.getElementById('e-location').value = userProfile.meetingLocation || '';
+  document.getElementById('e-schedule').value = userProfile.meetingSchedule  || '';
+  document.getElementById('err-name').textContent = '';
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+async function saveProfile() {
+  const name     = document.getElementById('e-name').value.trim();
+  const phone    = document.getElementById('e-phone').value.trim();
+  const location = document.getElementById('e-location').value.trim();
+  const schedule = document.getElementById('e-schedule').value.trim();
+  if (!name) { document.getElementById('err-name').textContent = 'Jina linahitajika.'; return; }
+  document.getElementById('err-name').textContent = '';
+  setLoading(true);
+  try {
+    await db.collection('users').doc(userProfile.uid).update({ name, phone, meetingLocation: location, meetingSchedule: schedule });
+    userProfile = { ...userProfile, name, phone, meetingLocation: location, meetingSchedule: schedule };
+    renderProfile(auth.currentUser, userProfile);
+    showToast('Wasifu umehifadhiwa!', 'success');
+    closeModal();
+  } catch(e) { showToast('Tatizo: ' + e.message, 'error'); }
+  finally { setLoading(false); }
+}
+
+function openPwdModal() {
+  document.getElementById('new-pwd').value = '';
+  document.getElementById('confirm-pwd').value = '';
+  document.getElementById('err-pwd').textContent = '';
+  document.getElementById('err-confirm-pwd').textContent = '';
+  document.getElementById('pwd-modal').classList.add('open');
+}
+
+async function changePassword() {
+  const newPwd  = document.getElementById('new-pwd').value;
+  const confirm = document.getElementById('confirm-pwd').value;
+  let valid = true;
+  if (newPwd.length < 6) { document.getElementById('err-pwd').textContent = 'Nenosiri liwe na herufi 6 au zaidi.'; valid=false; }
+  else document.getElementById('err-pwd').textContent = '';
+  if (newPwd !== confirm) { document.getElementById('err-confirm-pwd').textContent = 'Nenosiri hazifanani.'; valid=false; }
+  else document.getElementById('err-confirm-pwd').textContent = '';
+  if (!valid) return;
+  setLoading(true);
+  try {
+    await auth.currentUser.updatePassword(newPwd);
+    showToast('Nenosiri limebadilishwa!', 'success');
+    closeModalById('pwd-modal');
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      showToast('Tafadhali ondoka na uingie tena kabla ya kubadilisha nenosiri.', 'warning');
+    } else {
+      showToast('Tatizo: ' + e.message, 'error');
+    }
+  } finally { setLoading(false); }
+}
+
+function closeModal()      { document.getElementById('edit-modal').classList.remove('open'); }
+function closeModalById(id){ document.getElementById(id).classList.remove('open'); }
+function setLoading(show)  { document.getElementById('loading').style.display = show ? 'flex' : 'none'; }
+</script>
+</body>
+</html>
