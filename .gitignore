@@ -1,0 +1,16 @@
+﻿.env
+.env.local
+.env.production
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+logs/
+CLAUDE.local.md
+.claude/settings.local.json
